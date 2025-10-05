@@ -1,4 +1,4 @@
-use rustmix::{threading::*, Result};
+use essentialmix::{threading::*, Result};
 use std::{
     future::Future,
     pin::Pin,

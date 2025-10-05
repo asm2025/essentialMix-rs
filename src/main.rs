@@ -2,8 +2,10 @@
 #![allow(dead_code)]
 mod tests;
 
-use rustmix::{error::*, set_debug, Result};
+use dotenvy::dotenv;
 use tokio::{task, time::Duration};
+
+use essentialmix::{Result, error::*, set_debug};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -13,7 +15,7 @@ async fn main() -> Result<()> {
      Therefore, to test configuring log from a configuration file and code at the same time is not possible.
      It has to be done seperately.
     */
-    dotenv::dotenv().ok();
+    dotenv().ok();
 
     // set_debug(true);
     // println!("{}", CanceledError.get_message());

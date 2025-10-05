@@ -1,6 +1,6 @@
 use log::{debug, error, info, trace, warn};
 
-use rustmix::{
+use essentialmix::{
     io::{directory, path::AsPath},
     log::{log4rs, slog},
     Result,

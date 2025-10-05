@@ -1,10 +1,3 @@
-pub mod directory;
-pub mod file;
-pub mod path;
-
-mod key_listener;
-pub use key_listener::*;
-
 use crossterm::{
     cursor,
     event::{self, Event, KeyCode, KeyEvent},
@@ -13,11 +6,72 @@ use crossterm::{
 };
 use dialoguer::{theme::ColorfulTheme, Select};
 use std::{
+	thread,
     io::{stdin, stdout, Write},
     str::FromStr,
 };
+use tokio::sync::mpsc::{self, error::TryRecvError};
 
-use crate::{error::RmxError, Result};
+use crate::{error::emError, Result};
+
+#[derive(Debug)]
+pub struct KeyListener {
+    rx: mpsc::Receiver<KeyEvent>,
+    _handle: thread::JoinHandle<()>,
+}
+
+impl KeyListener {
+    pub fn new() -> Result<Self> {
+        Self::bounded(1)
+    }
+
+    pub fn bounded(buffer_size: usize) -> Result<Self> {
+        let (tx, rx) = mpsc::channel(buffer_size);
+
+        let handle = thread::spawn(move || {
+            if enable_raw_mode().is_err() {
+                return;
+            }
+
+            loop {
+                if let Ok(Event::Key(key)) = event::read() {
+                    if !key.is_press() {
+                        continue;
+                    }
+
+                    if tx.blocking_send(key).is_err() {
+                        break;
+                    }
+                }
+            }
+
+            let _ = disable_raw_mode();
+        });
+
+        Ok(KeyListener {
+            rx,
+            _handle: handle,
+        })
+    }
+
+    pub fn receiver(&self) -> &mpsc::Receiver<KeyEvent> {
+        &self.rx
+    }
+
+    pub async fn recv(&mut self) -> Option<KeyEvent> {
+        self.rx.recv().await
+    }
+
+    pub fn try_recv(&mut self) -> std::result::Result<KeyEvent, TryRecvError> {
+        self.rx.try_recv()
+    }
+}
+
+impl Drop for KeyListener {
+    fn drop(&mut self) {
+        let _ = disable_raw_mode();
+    }
+}
 
 pub fn clear_screen() -> Result<()> {
     let mut stdout = stdout();
@@ -39,7 +93,7 @@ pub fn display_menu(items: &[&str], prompt: Option<&str>) -> Result<usize> {
         .items(items)
         .default(0)
         .interact()
-        .map_err(|e| RmxError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| emError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
     Ok(if selection == items.len() - 1 {
         0
     } else {
@@ -65,7 +119,7 @@ pub fn get_str(prompt: Option<&str>) -> Result<String> {
     let input = get(prompt)?;
 
     if input.is_empty() {
-        return Err(RmxError::NoInput);
+        return Err(emError::NoInput);
     }
 
     Ok(input)
@@ -80,7 +134,7 @@ pub fn get_char(prompt: Option<&str>) -> Result<char> {
         if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
             match code {
                 KeyCode::Char(c) => break Ok(c),
-                KeyCode::Esc | KeyCode::Enter => break Err(RmxError::NoInput),
+                KeyCode::Esc | KeyCode::Enter => break Err(emError::NoInput),
                 _ => continue,
             }
         }
@@ -98,7 +152,7 @@ where
 {
     let input = get_str(prompt)?;
     let n = input.parse::<T>().map_err(|e| {
-        RmxError::Io(std::io::Error::new(
+        emError::Io(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
             e.to_string(),
         ))
@@ -117,7 +171,7 @@ pub fn get_password_str(prompt: Option<&str>) -> Result<String> {
     let input = get_password(prompt)?;
 
     if input.is_empty() {
-        return Err(RmxError::NoInput);
+        return Err(emError::NoInput);
     }
 
     Ok(input)
@@ -128,7 +182,7 @@ pub fn confirm(prompt: Option<&str>) -> Result<bool> {
 
     match input {
         'y' | 'Y' => Ok(true),
-        _ => Err(RmxError::NoInput),
+        _ => Err(emError::NoInput),
     }
 }
 

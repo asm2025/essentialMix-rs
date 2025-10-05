@@ -1,4 +1,4 @@
-use rustmix::{
+use essentialmix::{
     date::{parse_date_any, DATE_FORMAT, DATE_TIME_FORMAT},
     input,
     web::mail::{TempMail, TempMailProvider},

@@ -1,5 +1,5 @@
 use image::ImageFormat;
-use rustmix::{
+use essentialmix::{
     input,
     io::{
         directory,

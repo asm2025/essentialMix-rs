@@ -1,29 +1,48 @@
 [package]
 name = "testapp"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 chrono = "0"
-dotenv = "0"
+dotenvy = "0"
 humantime = "2"
 image = "0.24.9"
 lazy_static = "1"
 log = "0"
 rand = "0"
-essentialMix-rs = { workspace = true, features = ["full"] }
+essentialmix = { workspace = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 
 [workspace]
-members = ["essentialMix-rs"]
+members = [
+#	"crates/ai",
+	"crates/base",
+	"crates/core",
+	"crates/log",
+#	"crates/net",
+#	"crates/threading",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["asm <asm2do@gmail.com>"]
 
 [workspace.dependencies]
-essentialMix-rs = { path = "./essentialMix-rs" }
+#essentialmix-ai = { path = "crates/ai" }
+essentialmix = { path = "crates/base" }
+essentialmix-core = { path = "crates/core" }
+essentialmix-log = { path = "crates/log" }
+#essentialmix-net = { path = "crates/net" }
+#essentialmix-threading = { path = "crates/threading" }
 parking_lot = "0"
 
 [profile.dist]

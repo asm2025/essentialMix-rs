@@ -7,8 +7,7 @@ use slog_scope::GlobalLoggerGuard;
 use slog_term::{Decorator, PlainSyncDecorator};
 use std::{io, path::Path};
 
-use super::{LogLevel, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN};
-use crate::Result as CommonResult;
+use crate::{LogLevel, Result as CommonResult, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN};
 
 impl From<LogLevel> for slog::Level {
     fn from(level: LogLevel) -> slog::Level {

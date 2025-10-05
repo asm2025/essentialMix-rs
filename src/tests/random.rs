@@ -1,5 +1,5 @@
 use chrono::{Duration, Utc};
-use rustmix::{random, Result};
+use essentialmix::{random, Result};
 
 pub fn test_random() -> Result<()> {
     println!("Testing random...");

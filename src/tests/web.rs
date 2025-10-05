@@ -1,8 +1,8 @@
-use rustmix::{error::InvalidResponseError, web::*, Result};
+use essentialmix::{Result, error::InvalidResponseError, web::*};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use super::{get_employees, Employee};
+use super::{Employee, get_employees};
 
 pub fn test_url() -> Result<()> {
     println!("\nTesting Url functions...");

@@ -1,5 +1,5 @@
 use rand::{distributions::Alphanumeric, Rng};
-use rustmix::{
+use essentialmix::{
     io::{
         directory,
         file::{self, FileEx},

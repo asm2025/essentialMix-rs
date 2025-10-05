@@ -1,0 +1,37 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "essentialmix-ai"
+description = "essentialmix-ai is a Rust library that has some basic utility functions and components."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+essentialmix = { path = "../base", workspace = true}
+async-openai = { version = "0", optional = true }
+backoff = "0"
+futures = "0"
+image = { version = "0.24.9", optional = true } # compatibility with Kalosm
+kalosm = { version = "0", features = ["bert", "llama", "anthropic", "openai", "remote"], optional = true }
+kalosm-language = { version = "0", features = ["bert", "llama", "anthropic", "openai", "remote"], optional = true }
+reqwest = { version = "0", features = ["blocking", "cookies", "http2", "json", "gzip", "deflate", "brotli", "zstd", "multipart", "socks", "stream"] }
+rodio = { version = "0", optional = true }
+tokio = { version = "1", features = ["full"] }
+
+[features]
+default = ["language", "audio"]
+language = ["kalosm/language", "dep:async-openai", "dep:kalosm", "kalosm-language"]
+audio = ["kalosm/sound", "dep:async-openai", "dep:kalosm", "dep:rodio"]
+imaging = ["kalosm/vision", "dep:kalosm", "dep:image"]
+vision = ["kalosm/vision", "dep:kalosm", "dep:image"]
+metal = ["kalosm?/metal", "kalosm-language?/metal"]
+cuda = ["kalosm?/cuda", "kalosm-language?/cublas"]
+mkl = ["kalosm?/mkl", "kalosm-language?/mkl"]
+
+[package.metadata.scripts]
+run = "cargo run"
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+features = "cargo tree --features"

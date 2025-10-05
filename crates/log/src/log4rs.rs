@@ -1,6 +1,8 @@
 use log4rs::*;
 use std::path::Path;
 
+use crate::Result;
+
 use self::{
     append::{
         console::ConsoleAppender,
@@ -14,8 +16,7 @@ use self::{
     config::{runtime::ConfigBuilder, Appender, Root},
     encode::pattern::PatternEncoder,
 };
-use super::{LogLevel, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN};
-use crate::Result;
+use crate::{LogLevel, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN};
 
 pub fn configure<T: AsRef<Path>>(
     file_name: T,

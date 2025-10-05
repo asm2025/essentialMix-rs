@@ -1,5 +1,5 @@
 use humantime::format_duration;
-use rustmix::{
+use essentialmix::{
     ai::SourceSize,
     audio::rwhisper::{RWhisper, Segment},
     io::directory,
