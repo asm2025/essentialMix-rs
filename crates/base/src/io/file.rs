@@ -1,5 +1,5 @@
 use csv::{ReaderBuilder, WriterBuilder};
-use serde::{de, Serialize};
+use serde::{Serialize, de};
 use serde_json;
 use std::{
     fs::{self, OpenOptions},
@@ -244,7 +244,7 @@ impl FileEx for std::fs::File {
 
     fn read_json<T: de::DeserializeOwned>(&self) -> Result<T> {
         let reader = BufReader::new(self);
-        let data: T = serde_json::from_reader(reader)?;
+        let data: T = serde_json::from_reader(reader).unwrap();
         Ok(data)
     }
 
@@ -253,7 +253,7 @@ impl FileEx for std::fs::File {
             Some(true) => serde_json::to_string_pretty,
             _ => serde_json::to_string,
         };
-        let serialized = serialize(data)?;
+        let serialized = serialize(data).unwrap();
         self.write_all(serialized.as_bytes())?;
         Ok(())
     }

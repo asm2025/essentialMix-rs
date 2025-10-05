@@ -23,6 +23,7 @@ slog-term = { version = "2", optional = true }
 
 [features]
 default = ["log4rs"]
+full = ["log4rs", "slog"]
 log4rs = ["dep:file-rotate", "dep:log4rs"]
 slog = ["dep:file-rotate", "dep:slog", "dep:slog-async", "dep:slog-json", "dep:slog-scope", "dep:slog-stdlog", "dep:slog-term"]
 

@@ -7,16 +7,16 @@ use self::{
     append::{
         console::ConsoleAppender,
         rolling_file::{
-            policy::compound::{
-                roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger, CompoundPolicy,
-            },
             RollingFileAppender,
+            policy::compound::{
+                CompoundPolicy, roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger,
+            },
         },
     },
-    config::{runtime::ConfigBuilder, Appender, Root},
+    config::{Appender, Root, runtime::ConfigBuilder},
     encode::pattern::PatternEncoder,
 };
-use crate::{LogLevel, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN};
+use crate::{LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN, LogLevel};
 
 pub fn configure<T: AsRef<Path>>(
     file_name: T,
@@ -42,7 +42,9 @@ pub fn configure<T: AsRef<Path>>(
             .unwrap_or(LOG_SIZE_MAX)
             .clamp(LOG_SIZE_MIN, LOG_SIZE_MAX) as u64,
     );
-    let fix_window_roller = FixedWindowRoller::builder().build(&roller_pattern, 6)?;
+    let fix_window_roller = FixedWindowRoller::builder()
+        .build(&roller_pattern, 6)
+        .unwrap();
     let policy = CompoundPolicy::new(Box::new(size_trigger), Box::new(fix_window_roller));
     let file = RollingFileAppender::builder()
         .encoder(Box::new(PatternEncoder::new(&format!(
@@ -68,7 +70,8 @@ pub fn configure<T: AsRef<Path>>(
 }
 
 pub fn from_config(config: Config) -> Result<Handle> {
-    log4rs::init_config(config).map_err(Into::into)
+    let handle = log4rs::init_config(config).unwrap();
+    Ok(handle)
 }
 
 pub fn build<T: AsRef<Path>>(file_name: T) -> Result<Handle> {
@@ -80,15 +83,19 @@ pub fn build_with<T: AsRef<Path>>(
     level: LogLevel,
     limit: Option<usize>,
 ) -> Result<Handle> {
-    let config = configure(file_name, level, limit)?.build(
-        Root::builder()
-            .appender("console")
-            .appender("file")
-            .build(level.into()),
-    )?;
-    log4rs::init_config(config).map_err(Into::into)
+    let config = configure(file_name, level, limit)?
+        .build(
+            Root::builder()
+                .appender("console")
+                .appender("file")
+                .build(level.into()),
+        )
+        .unwrap();
+    let handle = log4rs::init_config(config).unwrap();
+    Ok(handle)
 }
 
 pub fn from_file<T: AsRef<Path>>(yaml_file_name: T) -> Result<()> {
-    log4rs::init_file(yaml_file_name, Default::default()).map_err(Into::into)
+    log4rs::init_file(yaml_file_name, Default::default()).unwrap();
+    Ok(())
 }

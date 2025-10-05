@@ -14,6 +14,12 @@ pub enum EMError {
     #[error("Invalid operation. {0}")]
     InvalidOperation(String),
 
+    #[error("Invalid directory. {0}")]
+    InvalidDirectory(String),
+
+    #[error("Invalid file. {0}")]
+    InvalidFile(String),
+
     #[error("Operation timed out")]
     Timeout,
 

@@ -17,17 +17,18 @@ pub fn parse_date_any(value: &str) -> Result<DateTime<Utc>> {
         .or_else(|_| {
             NaiveDate::parse_from_str(value, DATE_FORMAT)
                 .map(|d| NaiveDateTime::new(d, NaiveTime::MIN))
-        })?;
+        })
+        .unwrap();
     Ok(Utc.from_utc_datetime(&date))
 }
 
 pub fn parse_date(value: &str) -> Result<DateTime<Utc>> {
-    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_LONG_FORMAT)?;
+    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_LONG_FORMAT).unwrap();
     Ok(Utc.from_utc_datetime(&date))
 }
 
 pub fn parse_date_ftz(value: &str) -> Result<DateTime<Utc>> {
-    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_FULL_FORMAT_TZ)?;
+    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_FULL_FORMAT_TZ).unwrap();
     Ok(Utc.from_utc_datetime(&date))
 }
 
