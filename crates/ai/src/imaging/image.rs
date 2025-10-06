@@ -10,14 +10,13 @@ pub struct Image {
 }
 
 impl Image {
-    pub async fn new() -> Result<Self> {
-        let model = Wuerstchen::new().await?;
-        Ok(Image {
+    pub fn new(model: Wuerstchen) -> Self {
+        Ok(Self {
             model: Arc::new(model),
         })
     }
 
-    pub async fn with(
+    pub async fn from(
         flash_attn: bool,
         decoder_weights: impl Into<String>,
         clip_weights: impl Into<String>,
@@ -38,38 +37,41 @@ impl Image {
             .with_prior_tokenizer(prior_tokenizer)
             .build()
             .await?;
-        Ok(Image {
-            model: Arc::new(model),
-        })
+        Ok(Self::new(model))
     }
 
-    pub fn generate(&self, prompt: &str) -> Result<Vec<ImageBuffer<Rgb<u8>, Vec<u8>>>> {
+    pub fn generate(
+        &self,
+        prompt: &str,
+        callback: impl Fn(ImageBuffer<Rgb<u8>, Vec<u8>>) -> (),
+    ) -> Result<()> {
         let settings = WuerstchenInferenceSettings::new(prompt);
         let mut stream = self.model.run(settings)?;
         block_on(async {
-            let mut images = Vec::new();
-
             while let Some(img) = stream.next().await {
                 if let Some(buffer) = img.generated_image() {
-                    images.push(buffer);
+                    callback(buffer);
                 }
             }
 
-            Ok(images)
+            Ok(())
         })
     }
 
-    pub async fn generate_async(&self, prompt: &str) -> Result<Vec<ImageBuffer<Rgb<u8>, Vec<u8>>>> {
+    pub async fn generate_async(
+        &self,
+        prompt: &str,
+        callback: impl Fn(ImageBuffer<Rgb<u8>, Vec<u8>>) -> (),
+    ) -> Result<()> {
         let settings = WuerstchenInferenceSettings::new(prompt);
         let mut stream = self.model.run(settings)?;
-        let mut images = Vec::new();
 
         while let Some(img) = stream.next().await {
             if let Some(buffer) = img.generated_image() {
-                images.push(buffer);
+                callback(buffer);
             }
         }
 
-        Ok(images)
+        Ok(())
     }
 }

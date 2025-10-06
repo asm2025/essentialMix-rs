@@ -3,6 +3,8 @@ pub mod log4rs;
 #[cfg(feature = "slog")]
 pub mod slog;
 
+pub use essentialmix_core::*;
+
 use log::LevelFilter;
 
 pub const LOG_DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S.%f";

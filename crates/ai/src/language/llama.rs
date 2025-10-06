@@ -1,6 +1,7 @@
 use kalosm::*;
 
-use crate::{ai::*, language::*, Result};
+use super::{ModelSource, SourceSize};
+use crate::Result;
 
 #[derive(Clone)]
 pub struct LlamaSource;

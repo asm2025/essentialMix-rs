@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum EMError {
+pub enum Error {
     #[error("Operation is canceled")]
     Canceled,
 

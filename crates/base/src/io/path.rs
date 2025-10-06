@@ -7,7 +7,7 @@ use glob::glob_with;
 use std::path::{Path, PathBuf};
 use std::{fs, result::Result as StdResult};
 
-use crate::{Result, errors::EMError, string::*};
+use crate::{Error, Result, string::*};
 
 pub trait PathEx {
     fn as_str(&self) -> &str;
@@ -332,7 +332,7 @@ pub fn lst_filtered<T: AsRef<Path>, F: Fn(&PathBuf) -> bool + 'static>(
     if !path.is_dir() {
         if !path.exists() {
             let path = path.to_string_lossy().into_owned();
-            return Err(EMError::NotFound(path).into());
+            return Err(Error::NotFound(path).into());
         }
 
         return Ok(Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _>>);
@@ -387,7 +387,7 @@ pub fn cpy_with<F: AsRef<str>, T: AsRef<Path>>(from: F, to: T, option: &CopyOpti
     let from = from.as_ref();
 
     if from.is_empty() {
-        return Err(EMError::InvalidOperation("Empty source path".to_string()).into());
+        return Err(Error::InvalidOperation("Empty source path".to_string()).into());
     }
 
     let to = to.as_ref();
@@ -439,7 +439,7 @@ pub fn mov_with<F: AsRef<str>, T: AsRef<Path>>(from: F, to: T, option: &CopyOpti
     let from = from.as_ref();
 
     if from.is_empty() {
-        return Err(EMError::InvalidOperation("Empty source path".to_string()).into());
+        return Err(Error::InvalidOperation("Empty source path".to_string()).into());
     }
 
     let to = to.as_ref();
@@ -512,13 +512,13 @@ pub fn del_match<T: AsRef<Path>>(path: T, pattern: &str) -> Result<()> {
 
     if !path.is_dir() {
         if path.is_file() {
-            return Err(EMError::InvalidDirectory(path.to_string_lossy().into_owned()).into());
+            return Err(Error::InvalidDirectory(path.to_string_lossy().into_owned()).into());
         }
         return Ok(());
     }
 
     if pattern.is_empty() {
-        return Err(EMError::InvalidOperation("Empty source path".to_string()).into());
+        return Err(Error::InvalidOperation("Empty source path".to_string()).into());
     }
 
     let pattern = format!("{}/{}", path.to_string_lossy(), pattern);

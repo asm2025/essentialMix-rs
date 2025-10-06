@@ -17,16 +17,20 @@ kalosm = { version = "0", features = ["bert", "llama", "anthropic", "openai", "r
 kalosm-language = { version = "0", features = ["bert", "llama", "anthropic", "openai", "remote"], optional = true }
 reqwest = { version = "0", features = ["blocking", "cookies", "http2", "json", "gzip", "deflate", "brotli", "zstd", "multipart", "socks", "stream"] }
 rodio = { version = "0", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 
 [features]
-default = ["language", "audio"]
+default = ["language"]
+full = ["language", "audio", "imaging", "vision"]
+full-cuda = ["language", "audio", "imaging", "vision", "cuda"]
 language = ["kalosm/language", "dep:async-openai", "dep:kalosm", "kalosm-language"]
 audio = ["kalosm/sound", "dep:async-openai", "dep:kalosm", "dep:rodio"]
 imaging = ["kalosm/vision", "dep:kalosm", "dep:image"]
 vision = ["kalosm/vision", "dep:kalosm", "dep:image"]
-metal = ["kalosm?/metal", "kalosm-language?/metal"]
 cuda = ["kalosm?/cuda", "kalosm-language?/cublas"]
+metal = ["kalosm?/metal", "kalosm-language?/metal"]
 mkl = ["kalosm?/mkl", "kalosm-language?/mkl"]
 
 [package.metadata.scripts]

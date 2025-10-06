@@ -1,10 +1,10 @@
-pub mod errors;
+mod errors;
 
 use std::sync::OnceLock;
 
-use errors::EMError;
+pub use errors::Error;
 
-pub type Result<T> = std::result::Result<T, EMError>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 static DEBUG: OnceLock<bool> = OnceLock::new();
 

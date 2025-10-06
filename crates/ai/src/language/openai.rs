@@ -7,10 +7,10 @@ use std::{
     fmt,
     sync::{Arc, Mutex},
 };
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 
-use crate::{ai::SourceSize, error::*, Result};
+use crate::{Result, SourceSize, errors::Error};
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum OpenAiSource {
@@ -36,6 +36,17 @@ impl fmt::Display for OpenAiSource {
     }
 }
 
+impl From<SourceSize> for OpenAiSource {
+    fn from(size: SourceSize) -> Self {
+        match size {
+            SourceSize::Tiny => OpenAiSource::gpt_4o_mini,
+            SourceSize::Small | SourceSize::Base => OpenAiSource::gpt_4o,
+            SourceSize::Medium => OpenAiSource::gpt_4,
+            SourceSize::Large => OpenAiSource::gpt_4_turbo,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct ChatGpt<C: Config> {
     client: Arc<Client<C>>,
@@ -46,7 +57,7 @@ pub struct ChatGpt<C: Config> {
 }
 
 impl<C: Config> ChatGpt<C> {
-    pub fn quick(config: C) -> Self {
+    pub fn new(config: C) -> Self {
         Self::with(
             config,
             Some(OpenAiSource::default()),
@@ -55,14 +66,9 @@ impl<C: Config> ChatGpt<C> {
         )
     }
 
-    pub fn new(config: C, size: SourceSize) -> Self {
-        let source = match size {
-            SourceSize::Tiny => OpenAiSource::gpt_4o_mini,
-            SourceSize::Small | SourceSize::Base => OpenAiSource::gpt_4o,
-            SourceSize::Medium => OpenAiSource::gpt_4,
-            SourceSize::Large => OpenAiSource::gpt_4_turbo,
-        };
-        Self::with(
+    pub fn from_size(config: C, size: SourceSize) -> Self {
+        let source = size.into();
+        Self::from(
             config,
             Some(source),
             ReqwestClient::new(),
@@ -70,11 +76,11 @@ impl<C: Config> ChatGpt<C> {
         )
     }
 
-    pub fn with_client(config: C, client: ReqwestClient, source: Option<OpenAiSource>) -> Self {
-        Self::with(config, source, client, Default::default())
+    pub fn from_client(config: C, client: ReqwestClient, source: Option<OpenAiSource>) -> Self {
+        Self::from(config, source, client, Default::default())
     }
 
-    pub fn with(
+    pub fn from(
         config: C,
         source: Option<OpenAiSource>,
         client: ReqwestClient,
@@ -99,7 +105,7 @@ impl<C: Config> ChatGpt<C> {
         let prompt = if prompt.is_empty() { "\n>" } else { prompt };
         let prompt = prompt_input(prompt)?;
         if prompt.is_empty() {
-            return Err(NoInputError.into());
+            return Err(Error::NoInput);
         }
 
         let messages = [ChatCompletionRequestUserMessageArgs::default()

@@ -22,7 +22,7 @@ tokio = { version = "1", features = ["full"] }
 
 [workspace]
 members = [
-#	"crates/ai",
+	"crates/ai",
 	"crates/base",
 	"crates/core",
 	"crates/log",
@@ -37,7 +37,7 @@ license = "MIT"
 authors = ["asm <asm2do@gmail.com>"]
 
 [workspace.dependencies]
-#essentialmix-ai = { path = "crates/ai" }
+essentialmix-ai = { path = "crates/ai" }
 essentialmix = { path = "crates/base" }
 essentialmix-core = { path = "crates/core" }
 essentialmix-log = { path = "crates/log" }
