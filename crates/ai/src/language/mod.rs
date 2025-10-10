@@ -1,5 +1,7 @@
-pub mod llama;
-pub mod openai;
+mod llama;
+pub use llama::*;
+mod openai;
+pub use openai::*;
 
 use kalosm::{
     language::{
@@ -54,8 +56,9 @@ pub trait ModelSource: Send + Sync + Clone {
 
     fn default_size() -> SourceSize;
     fn builder() -> Self::Builder;
-    async fn new() -> Result<Self::Model>;
-    async fn from_size(size: SourceSize) -> Result<Self::Model>;
+    fn new() -> impl std::future::Future<Output = Result<Self::Model>> + Send;
+    fn from_size(size: SourceSize)
+    -> impl std::future::Future<Output = Result<Self::Model>> + Send;
 }
 
 /**
@@ -117,7 +120,7 @@ where
 {
     /// Create a new instance with default/base size using a specific source type
     pub async fn new<S: ModelSource<Model = M>>() -> Result<Self> {
-        let model = S::new().await.unwrap();
+        let model = S::new().await?;
         Ok(Self {
             model: Arc::new(Mutex::new(model)),
         })
@@ -125,7 +128,7 @@ where
 
     /// Create a new instance with specified size using a specific source type
     pub async fn from_size<S: ModelSource<Model = M>>(size: SourceSize) -> Result<Self> {
-        let model = S::from_size(size).await.unwrap();
+        let model = S::from_size(size).await?;
         Ok(Self {
             model: Arc::new(Mutex::new(model)),
         })
@@ -145,13 +148,16 @@ where
     ) -> Result<TextCompletionBuilder<S::Model>> {
         let prompt = prompt.as_ref();
         let prompt = if prompt.is_empty() { "\n>" } else { prompt };
-        let prompt = language::prompt_input(prompt).unwrap();
+        let prompt = language::prompt_input(prompt)?;
 
         if prompt.is_empty() {
             return Err(Error::NoInput);
         }
 
-        let model = self.model.lock().unwrap();
+        let model = self
+            .model
+            .lock()
+            .map_err(|e| Error::Poisoned(e.to_string()))?;
         let completion = model.complete(prompt);
 
         Ok(completion)
@@ -159,13 +165,13 @@ where
 
     /// Load chat history from file
     pub async fn load_session<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        let content = fs::read_to_string(path).unwrap();
-        let history: Vec<ChatMessage> = serde_json::from_str(&content).unwrap();
+        let content = fs::read_to_string(path)?;
+        let history: Vec<ChatMessage> = serde_json::from_str(&content)?;
 
-        // let mut llm = language::Llama::new().await.unwrap();
+        // let mut llm = language::Llama::new().await?;
         // let o: language::TextCompletionBuilder<language::Llama> = llm.complete(prompt);
 
-        //let chat = self.model.lock().unwrap();
+        //let chat = self.model.lock()?;
 
         // Clear existing history and rebuild from saved data
         // Note: This assumes the Chat API allows rebuilding from history
@@ -184,7 +190,6 @@ where
                     // Add system message to history
                     // This is a placeholder - adjust based on actual Chat API
                 }
-                _ => {}
             }
         }
 
@@ -193,17 +198,20 @@ where
 
     /// Save current session to file
     pub async fn save_session<T: AsRef<Path>>(&self, path: T) -> Result<()> {
-        let history = self.history().await.unwrap();
-        let json = serde_json::to_string_pretty(&history).unwrap();
-        fs::write(path, json).unwrap();
+        let history = self.history().await?;
+        let json = serde_json::to_string_pretty(&history)?;
+        fs::write(path, json)?;
         Ok(())
     }
 
     /// Get current chat history
     pub async fn history(&self) -> Result<Vec<ChatMessage>> {
-        let model = self.model.lock().unwrap();
+        let model = self
+            .model
+            .lock()
+            .map_err(|e| Error::Poisoned(e.to_string()))?;
         let chat = model.chat();
-        let session = chat.session().unwrap();
+        let session = chat.session().map_err(|e| Error::Session(e.to_string()))?;
         let history = session.history();
         Ok(history)
     }

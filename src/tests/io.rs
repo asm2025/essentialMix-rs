@@ -1,14 +1,14 @@
-use rand::{distributions::Alphanumeric, Rng};
 use essentialmix::{
+    Result,
     io::{
         directory,
         file::{self, FileEx},
         path::{self, IntoPath, PathEx},
     },
-    Result,
 };
+use rand::{Rng, distributions::Alphanumeric};
 use std::{
-    io::{stdin, LineWriter, Write},
+    io::{LineWriter, Write, stdin},
     path::PathBuf,
 };
 
@@ -32,7 +32,7 @@ pub fn test_path() -> Result<()> {
     let path = "./files/audio";
     println!("\nI will find SOME files in '{}'.", &path);
 
-    for entry in path::lst_match(format!("{}/*.mp3", &path)).unwrap() {
+    for entry in path::r#match(format!("{}/*.mp3", &path)).unwrap() {
         println!("{}", entry.display());
     }
 
@@ -41,7 +41,7 @@ pub fn test_path() -> Result<()> {
         &path
     );
 
-    for entry in path::lst_match_filtered(format!("{}/*.mp3", &path), |e| {
+    for entry in path::match_filtered(format!("{}/*.mp3", &path), |e| {
         let fname = e.file_stem().unwrap().to_str().unwrap();
         fname.starts_with('f') && fname.ends_with('n')
     })
@@ -62,7 +62,7 @@ pub fn test_path() -> Result<()> {
     path::cpy("./files/audio/*.*", &tmpdir)?;
     println!("I will print ALL the new files.");
 
-    for entry in path::lst(&tmpdir).unwrap() {
+    for entry in path::list(&tmpdir).unwrap() {
         println!("{}", entry.display());
     }
 
@@ -73,7 +73,7 @@ pub fn test_path() -> Result<()> {
     );
     path::mov(&format!("{}/*.wav", tmpdir.display()), &new_folder)?;
 
-    for entry in path::lst(&new_folder).unwrap() {
+    for entry in path::list(&new_folder).unwrap() {
         println!("{}", entry.display());
     }
 

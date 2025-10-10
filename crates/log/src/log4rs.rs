@@ -1,7 +1,7 @@
 use log4rs::*;
 use std::path::Path;
 
-use crate::Result;
+use crate::{Error, Result};
 
 use self::{
     append::{
@@ -28,8 +28,14 @@ pub fn configure<T: AsRef<Path>>(
         Some(folder) => folder,
         None => Path::new(""),
     };
-    let base_name = file_name.file_stem().unwrap().to_str().unwrap().to_string();
-    let extension = file_name.extension().unwrap().to_str().unwrap().to_string();
+    let base_name = match file_name.file_stem() {
+        Some(name) => name.to_str().unwrap_or("").to_string(),
+        None => "".to_string(),
+    };
+    let extension = match file_name.extension() {
+        Some(ext) => ext.to_str().unwrap_or("").to_string(),
+        None => "".to_string(),
+    };
     let roller_pattern = folder
         .join(format!("{}.{{}}.old.{}", base_name, extension))
         .to_string_lossy()
@@ -44,7 +50,7 @@ pub fn configure<T: AsRef<Path>>(
     );
     let fix_window_roller = FixedWindowRoller::builder()
         .build(&roller_pattern, 6)
-        .unwrap();
+        .map_err(|e| Error::from_other_error(e.to_string()))?;
     let policy = CompoundPolicy::new(Box::new(size_trigger), Box::new(fix_window_roller));
     let file = RollingFileAppender::builder()
         .encoder(Box::new(PatternEncoder::new(&format!(
@@ -70,7 +76,7 @@ pub fn configure<T: AsRef<Path>>(
 }
 
 pub fn from_config(config: Config) -> Result<Handle> {
-    let handle = log4rs::init_config(config).unwrap();
+    let handle = log4rs::init_config(config).map_err(|e| Error::from_std_error(e))?;
     Ok(handle)
 }
 
@@ -90,12 +96,13 @@ pub fn build_with<T: AsRef<Path>>(
                 .appender("file")
                 .build(level.into()),
         )
-        .unwrap();
-    let handle = log4rs::init_config(config).unwrap();
+        .map_err(|e| Error::from_std_error(e))?;
+    let handle = log4rs::init_config(config).map_err(|e| Error::from_std_error(e))?;
     Ok(handle)
 }
 
 pub fn from_file<T: AsRef<Path>>(yaml_file_name: T) -> Result<()> {
-    log4rs::init_file(yaml_file_name, Default::default()).unwrap();
+    log4rs::init_file(yaml_file_name, Default::default())
+        .map_err(|e| Error::from_other_error(e.to_string()))?;
     Ok(())
 }

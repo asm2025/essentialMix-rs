@@ -1,2 +1,4 @@
-pub mod openai;
-pub mod whisper;
+mod openai;
+pub use openai::*;
+mod whisper;
+pub use whisper::*;

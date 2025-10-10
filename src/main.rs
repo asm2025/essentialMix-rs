@@ -5,7 +5,7 @@ mod tests;
 use dotenvy::dotenv;
 use tokio::{task, time::Duration};
 
-use essentialmix::{Result, error::*, set_debug};
+use essentialmix::{Error, Result, set_debug};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
 
     //tests::test_rwhisper().await?;
 
-    tests::test_llma().await?;
+    //tests::test_llma().await?;
 
     //tests::test_image().await?;
 

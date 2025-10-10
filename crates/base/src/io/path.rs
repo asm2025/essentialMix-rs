@@ -138,7 +138,7 @@ impl<T: AsRef<str>> IntoPath<T> for Vec<T> {
 
 pub trait AsPath<T> {
     fn as_path(&self) -> String;
-    fn as_full_path(&self) -> String;
+    fn as_full_path(&self) -> Result<String>;
 }
 
 impl<T: AsRef<str>> AsPath<T> for (T, T) {
@@ -147,9 +147,9 @@ impl<T: AsRef<str>> AsPath<T> for (T, T) {
         path.as_str().to_string()
     }
 
-    fn as_full_path(&self) -> String {
+    fn as_full_path(&self) -> Result<String> {
         let path = self.into_path();
-        path.canonicalize().unwrap().as_str().to_string()
+        Ok(path.canonicalize()?.as_str().to_string())
     }
 }
 
@@ -159,9 +159,9 @@ impl<T: AsRef<str>> AsPath<T> for (T, T, T) {
         path.as_str().to_string()
     }
 
-    fn as_full_path(&self) -> String {
+    fn as_full_path(&self) -> Result<String> {
         let path = self.into_path();
-        path.canonicalize().unwrap().as_str().to_string()
+        Ok(path.canonicalize()?.as_str().to_string())
     }
 }
 
@@ -171,9 +171,9 @@ impl<T: AsRef<str>> AsPath<T> for (T, T, T, T) {
         path.as_str().to_string()
     }
 
-    fn as_full_path(&self) -> String {
+    fn as_full_path(&self) -> Result<String> {
         let path = self.into_path();
-        path.canonicalize().unwrap().as_str().to_string()
+        Ok(path.canonicalize()?.as_str().to_string())
     }
 }
 
@@ -183,9 +183,9 @@ impl<T: AsRef<str>> AsPath<T> for (T, T, T, T, T) {
         path.as_str().to_string()
     }
 
-    fn as_full_path(&self) -> String {
+    fn as_full_path(&self) -> Result<String> {
         let path = self.into_path();
-        path.canonicalize().unwrap().as_str().to_string()
+        Ok(path.canonicalize()?.as_str().to_string())
     }
 }
 
@@ -195,9 +195,9 @@ impl<T: AsRef<str>, const N: usize> AsPath<T> for [T; N] {
         path.as_str().to_string()
     }
 
-    fn as_full_path(&self) -> String {
+    fn as_full_path(&self) -> Result<String> {
         let path = self.into_path();
-        path.canonicalize().unwrap().as_str().to_string()
+        Ok(path.canonicalize()?.as_str().to_string())
     }
 }
 
@@ -207,9 +207,9 @@ impl<T: AsRef<str>> AsPath<T> for Vec<T> {
         path.as_str().to_string()
     }
 
-    fn as_full_path(&self) -> String {
+    fn as_full_path(&self) -> Result<String> {
         let path = self.into_path();
-        path.canonicalize().unwrap().as_str().to_string()
+        Ok(path.canonicalize()?.as_str().to_string())
     }
 }
 
@@ -308,7 +308,7 @@ pub fn set_extension<T: AsRef<str>>(path: T, ext: Option<&str>) -> String {
     path.to_string_lossy().into_owned()
 }
 
-pub fn lst<T: AsRef<Path>>(path: T) -> Result<impl Iterator<Item = PathBuf>> {
+pub fn list<T: AsRef<Path>>(path: T) -> Result<impl Iterator<Item = PathBuf>> {
     let path = path.as_ref();
 
     if !path.is_dir() {
@@ -323,7 +323,7 @@ pub fn lst<T: AsRef<Path>>(path: T) -> Result<impl Iterator<Item = PathBuf>> {
     Ok(Box::new(iter) as Box<dyn Iterator<Item = _>>)
 }
 
-pub fn lst_filtered<T: AsRef<Path>, F: Fn(&PathBuf) -> bool + 'static>(
+pub fn list_filtered<T: AsRef<Path>, F: Fn(&PathBuf) -> bool + 'static>(
     path: T,
     filter: F,
 ) -> Result<impl Iterator<Item = PathBuf>> {
@@ -350,20 +350,20 @@ pub fn lst_filtered<T: AsRef<Path>, F: Fn(&PathBuf) -> bool + 'static>(
     Ok(Box::new(iter) as Box<dyn Iterator<Item = _>>)
 }
 
-pub fn lst_match<T: AsRef<str>>(pattern: T) -> Result<impl Iterator<Item = PathBuf>> {
+pub fn r#match<T: AsRef<str>>(pattern: T) -> Result<impl Iterator<Item = PathBuf>> {
     let pattern = pattern.as_ref();
 
     if pattern.is_empty() {
         return Ok(Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _>>);
     }
 
-    let paths = glob_with(&pattern, glob_defaults()).unwrap();
+    let paths = glob_with(&pattern, glob_defaults()).map_err(Error::from_std_error)?;
     let iter = paths.filter_map(StdResult::ok);
 
     Ok(Box::new(iter) as Box<dyn Iterator<Item = _>>)
 }
 
-pub fn lst_match_filtered<T: AsRef<str>, F: Fn(&PathBuf) -> bool + 'static>(
+pub fn match_filtered<T: AsRef<str>, F: Fn(&PathBuf) -> bool + 'static>(
     pattern: T,
     filter: F,
 ) -> Result<impl Iterator<Item = PathBuf>> {
@@ -373,7 +373,7 @@ pub fn lst_match_filtered<T: AsRef<str>, F: Fn(&PathBuf) -> bool + 'static>(
         return Ok(Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _>>);
     }
 
-    let paths = glob_with(&pattern, glob_defaults()).unwrap();
+    let paths = glob_with(&pattern, glob_defaults()).map_err(Error::from_std_error)?;
     let iter = paths.filter_map(StdResult::ok).filter(move |e| filter(e));
 
     Ok(Box::new(iter) as Box<dyn Iterator<Item = _>>)
@@ -393,20 +393,20 @@ pub fn cpy_with<F: AsRef<str>, T: AsRef<Path>>(from: F, to: T, option: &CopyOpti
     let to = to.as_ref();
 
     if from.find_first(|e| e == '*' || e == '?').is_some() {
-        return use_wild_card(from, to, option).map_err(Into::into);
+        return Ok(use_wild_card(from, to, option)?);
     }
 
     let from = Path::new(from);
-    return use_path(from, to, option).map_err(Into::into);
+    return Ok(use_path(from, to, option)?);
 
     fn use_path(from: &Path, to: &Path, option: &CopyOptions) -> Result<()> {
         fs::create_dir_all(&to)?;
 
         if from.is_dir() {
             let dir_options = file_options_to_dir_options(option);
-            dirExtra::copy(from, to, &dir_options).unwrap();
+            dirExtra::copy(from, to, &dir_options).map_err(Error::from_std_error)?;
         } else {
-            fileExtra::copy(from, to, option).unwrap();
+            fileExtra::copy(from, to, option).map_err(Error::from_std_error)?;
         }
 
         Ok(())
@@ -414,16 +414,19 @@ pub fn cpy_with<F: AsRef<str>, T: AsRef<Path>>(from: F, to: T, option: &CopyOpti
 
     fn use_wild_card(from: &str, to: &Path, option: &CopyOptions) -> Result<()> {
         fs::create_dir_all(&to)?;
-        let paths = glob_with(from, glob_defaults()).unwrap();
+        let paths = glob_with(from, glob_defaults()).map_err(Error::from_std_error)?;
         let dir_options = file_options_to_dir_options(option);
 
         for entry in paths.filter_map(|e| e.ok()) {
-            let desination = to.join(entry.file_name().unwrap());
+            let desination = match entry.file_name() {
+                Some(name) => to.join(name),
+                _ => to.to_path_buf(),
+            };
 
             if entry.is_dir() {
-                dirExtra::copy(entry, desination, &dir_options).unwrap();
+                dirExtra::copy(entry, desination, &dir_options).map_err(Error::from_std_error)?;
             } else {
-                fileExtra::copy(entry, desination, option).unwrap();
+                fileExtra::copy(entry, desination, option).map_err(Error::from_std_error)?;
             }
         }
 
@@ -445,20 +448,20 @@ pub fn mov_with<F: AsRef<str>, T: AsRef<Path>>(from: F, to: T, option: &CopyOpti
     let to = to.as_ref();
 
     if from.find_first(|e| e == '*' || e == '?').is_some() {
-        return use_wild_card(from, to, option).map_err(Into::into);
+        return Ok(use_wild_card(from, to, option)?);
     }
 
     let from = Path::new(from);
-    return use_path(from, to, option).map_err(Into::into);
+    return Ok(use_path(from, to, option)?);
 
     fn use_path(from: &Path, to: &Path, option: &CopyOptions) -> Result<()> {
         fs::create_dir_all(&to)?;
 
         if from.is_dir() {
             let dir_options = file_options_to_dir_options(option);
-            dirExtra::move_dir(from, to, &dir_options).unwrap();
+            dirExtra::move_dir(from, to, &dir_options).map_err(Error::from_std_error)?;
         } else {
-            fileExtra::move_file(from, to, option).unwrap();
+            fileExtra::move_file(from, to, option).map_err(Error::from_std_error)?;
         }
 
         Ok(())
@@ -466,16 +469,20 @@ pub fn mov_with<F: AsRef<str>, T: AsRef<Path>>(from: F, to: T, option: &CopyOpti
 
     fn use_wild_card(from: &str, to: &Path, option: &CopyOptions) -> Result<()> {
         fs::create_dir_all(&to)?;
-        let paths = glob_with(from, glob_defaults()).unwrap();
+        let paths = glob_with(from, glob_defaults()).map_err(Error::from_std_error)?;
         let dir_options = file_options_to_dir_options(option);
 
         for entry in paths.filter_map(|e| e.ok()) {
-            let desination = to.join(entry.file_name().unwrap());
+            let desination = match entry.file_name() {
+                Some(name) => to.join(name),
+                _ => to.to_path_buf(),
+            };
 
             if entry.is_dir() {
-                dirExtra::move_dir(entry, desination, &dir_options).unwrap();
+                dirExtra::move_dir(entry, desination, &dir_options)
+                    .map_err(Error::from_std_error)?;
             } else {
-                fileExtra::move_file(entry, desination, option).unwrap();
+                fileExtra::move_file(entry, desination, option).map_err(Error::from_std_error)?;
             }
         }
 
@@ -488,22 +495,25 @@ pub fn ren<F: AsRef<Path>, T: AsRef<str>>(from: F, to: T) -> Result<()> {
 
     if to.contains(std::path::is_separator) {
         let to = Path::new(to);
-        return fs::rename(from, to).map_err(Into::into);
+        return Ok(fs::rename(from, to)?);
     }
 
     let from = from.as_ref();
-    let parent = from.parent().unwrap();
+    let parent = match from.parent() {
+        Some(it) => it,
+        None => Path::new(""),
+    };
     let to = parent.join(to);
-    fs::rename(from, to).map_err(Into::into)
+    Ok(fs::rename(from, to)?)
 }
 
 pub fn del<T: AsRef<Path>>(path: T) -> Result<()> {
     let path = path.as_ref();
 
     if path.is_dir() {
-        fs::remove_dir_all(path).map_err(Into::into)
+        Ok(fs::remove_dir_all(path)?)
     } else {
-        fs::remove_file(path).map_err(Into::into)
+        Ok(fs::remove_file(path)?)
     }
 }
 
@@ -522,7 +532,7 @@ pub fn del_match<T: AsRef<Path>>(path: T, pattern: &str) -> Result<()> {
     }
 
     let pattern = format!("{}/{}", path.to_string_lossy(), pattern);
-    let paths = glob_with(&pattern, glob_defaults()).unwrap();
+    let paths = glob_with(&pattern, glob_defaults()).map_err(Error::from_std_error)?;
 
     for entry in paths.filter_map(|e| e.ok()) {
         if entry.is_dir() {

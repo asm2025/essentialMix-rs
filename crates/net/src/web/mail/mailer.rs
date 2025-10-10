@@ -1,6 +1,6 @@
 use lettre::{
-    transport::smtp::{authentication::Credentials, response::Response},
     Message, SmtpTransport, Transport,
+    transport::smtp::{authentication::Credentials, response::Response},
 };
 
 use crate::Result;
@@ -11,13 +11,12 @@ pub struct Mailer {
 }
 
 impl Mailer {
-    pub fn new(host: &str, username: &str, password: &str) -> Self {
-        Mailer {
-            smtp: SmtpTransport::relay(host)
-                .unwrap()
+    pub fn new(host: &str, username: &str, password: &str) -> Result<Self> {
+        Ok(Self {
+            smtp: SmtpTransport::relay(host)?
                 .credentials(Credentials::new(username.to_owned(), password.to_owned()))
                 .build(),
-        }
+        })
     }
 
     pub fn from(smtp: SmtpTransport) -> Self {
@@ -26,11 +25,10 @@ impl Mailer {
 
     pub fn send(&self, from: &str, to: &str, subject: &str, body: &str) -> Result<Response> {
         let email = Message::builder()
-            .from(from.parse().unwrap())
-            .to(to.parse().unwrap())
+            .from(from.parse()?)
+            .to(to.parse()?)
             .subject(subject)
-            .body(body.to_string())
-            .unwrap();
-        self.smtp.send(&email).map_err(Into::into)
+            .body(body.to_string())?;
+        self.smtp.send(&email)?
     }
 }

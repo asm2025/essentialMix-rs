@@ -3,8 +3,9 @@ use std::path::{Path, PathBuf};
 
 use crate::Result;
 
-pub fn current() -> PathBuf {
-    std::env::current_dir().unwrap()
+pub fn current() -> Result<PathBuf> {
+    let cur = std::env::current_dir()?;
+    Ok(cur)
 }
 
 pub fn exists<T: AsRef<Path>>(path: T) -> bool {
@@ -18,7 +19,8 @@ pub fn create<T: AsRef<Path>>(path: T) -> Result<()> {
         return Ok(());
     }
 
-    fs::create_dir(path).map_err(Into::into)
+    fs::create_dir(path)?;
+    Ok(())
 }
 
 pub fn ensure<T: AsRef<Path>>(path: T) -> Result<()> {
@@ -28,7 +30,8 @@ pub fn ensure<T: AsRef<Path>>(path: T) -> Result<()> {
         return Ok(());
     }
 
-    fs::create_dir_all(path).map_err(Into::into)
+    fs::create_dir_all(path)?;
+    Ok(())
 }
 
 pub fn is_empty<T: AsRef<Path>>(path: T) -> bool {

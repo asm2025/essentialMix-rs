@@ -37,8 +37,10 @@ pub fn create<T: AsRef<Path>>(path: T) -> Result<std::fs::File> {
 
 pub fn create_with<T: AsRef<Path>>(path: T, options: FileOpenOptions) -> Result<std::fs::File> {
     let path = path.as_ref();
-    let dir = path.parent().unwrap();
-    directory::ensure(dir)?;
+
+    if let Some(dir) = path.parent() {
+        directory::ensure(dir)?;
+    }
 
     let mut opt = OpenOptions::new();
     opt.read(true);
@@ -53,7 +55,7 @@ pub fn create_with<T: AsRef<Path>>(path: T, options: FileOpenOptions) -> Result<
 
 pub fn from_options<T: AsRef<Path>>(path: T, options: &OpenOptions) -> Result<std::fs::File> {
     let path = path.as_ref();
-    options.open(path).map_err(Into::into)
+    Ok(options.open(path)?)
 }
 
 pub fn delete<T: AsRef<Path>>(path: T) -> Result<()> {
@@ -63,7 +65,7 @@ pub fn delete<T: AsRef<Path>>(path: T) -> Result<()> {
         return Ok(());
     }
 
-    fs::remove_file(path).map_err(Into::into)
+    Ok(fs::remove_file(path)?)
 }
 
 pub trait FileEx {
@@ -231,7 +233,7 @@ impl FileEx for std::fs::File {
     }
 
     fn write<T: AsRef<str>>(&mut self, data: &T) -> Result<()> {
-        writeln!(self, "{}", data.as_ref()).map_err(Into::into)
+        Ok(writeln!(self, "{}", data.as_ref())?)
     }
 
     fn write_lines<T: AsRef<str>>(&mut self, data: impl Iterator<Item = T>) -> Result<()> {
@@ -244,7 +246,7 @@ impl FileEx for std::fs::File {
 
     fn read_json<T: de::DeserializeOwned>(&self) -> Result<T> {
         let reader = BufReader::new(self);
-        let data: T = serde_json::from_reader(reader).unwrap();
+        let data: T = serde_json::from_reader(reader)?;
         Ok(data)
     }
 
@@ -253,7 +255,7 @@ impl FileEx for std::fs::File {
             Some(true) => serde_json::to_string_pretty,
             _ => serde_json::to_string,
         };
-        let serialized = serialize(data).unwrap();
+        let serialized = serialize(data)?;
         self.write_all(serialized.as_bytes())?;
         Ok(())
     }

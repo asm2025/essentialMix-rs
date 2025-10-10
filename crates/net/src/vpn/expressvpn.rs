@@ -1,13 +1,12 @@
 use execute::Execute;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::process::{Command, Stdio};
 
-use crate::{error::*, string::*, Result};
+use crate::{Result, error::*, string::*};
 
-lazy_static! {
-    static ref LOCATION_CLEAN: Regex = Regex::new(r"[\s\t]{2,}").unwrap();
-}
+static RGX_LOCATION_CLEAN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"[\s\t]{2,}").expect("Failed to compile regex"));
 
 #[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ExpressVPNStatus {

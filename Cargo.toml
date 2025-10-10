@@ -26,7 +26,7 @@ members = [
 	"crates/base",
 	"crates/core",
 	"crates/log",
-#	"crates/net",
+	"crates/net",
 #	"crates/threading",
 ]
 
@@ -37,12 +37,12 @@ license = "MIT"
 authors = ["asm <asm2do@gmail.com>"]
 
 [workspace.dependencies]
-essentialmix-ai = { path = "crates/ai" }
+essentialmix_ai = { path = "crates/ai" }
 essentialmix = { path = "crates/base" }
-essentialmix-core = { path = "crates/core" }
-essentialmix-log = { path = "crates/log" }
-#essentialmix-net = { path = "crates/net" }
-#essentialmix-threading = { path = "crates/threading" }
+essentialmix_core = { path = "crates/core" }
+essentialmix_log = { path = "crates/log" }
+essentialmix_net = { path = "crates/net" }
+#essentialmix_threading = { path = "crates/threading" }
 parking_lot = "0"
 
 [profile.dist]

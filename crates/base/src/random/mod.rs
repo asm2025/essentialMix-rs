@@ -9,8 +9,8 @@ pub mod internet;
 pub mod lorem;
 pub mod person;
 
-use fake::{faker::boolean::raw as f_boolean, locales, uuid, Fake};
-use rand::{distr::uniform::SampleUniform, rngs::StdRng, Rng};
+use fake::{Fake, faker::boolean::raw as f_boolean, locales, uuid};
+use rand::{Rng, distr::uniform::SampleUniform, rngs::StdRng};
 use std::ops::Range;
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -26,9 +26,9 @@ pub fn alphanum() -> char {
     let mut rng = StdRng::from_entropy();
     let num = rng.gen_range(0..62);
     match num {
-        0..=9 => char::from_u32(num as u32 + 48).unwrap(), // ASCII values for 0-9
-        10..=35 => char::from_u32(num as u32 + 55).unwrap(), // ASCII values for A-Z
-        _ => char::from_u32(num as u32 + 61).unwrap(),     // ASCII values for a-z
+        0..=9 => char::from_u32(num as u32 + 48).ok_or('0'), // ASCII values for 0-9
+        10..=35 => char::from_u32(num as u32 + 55).ok_or('A'), // ASCII values for A-Z
+        _ => char::from_u32(num as u32 + 61).ok_or('a'),     // ASCII values for a-z
     }
 }
 
@@ -50,10 +50,10 @@ pub fn char() -> char {
     let mut rng = StdRng::from_entropy();
     let num = rng.gen_range(0..94);
     match num {
-        0..=9 => char::from_u32(num as u32 + 48).unwrap(), // ASCII values for 0-9
-        10..=35 => char::from_u32(num as u32 + 55).unwrap(), // ASCII values for A-Z
-        36..=61 => char::from_u32(num as u32 + 61).unwrap(), // ASCII values for a-z
-        _ => char::from_u32(num as u32 + 33).unwrap(),     // ASCII values for special characters
+        0..=9 => char::from_u32(num as u32 + 48).ok_or('0'), // ASCII values for 0-9
+        10..=35 => char::from_u32(num as u32 + 55).ok_or('A'), // ASCII values for A-Z
+        36..=61 => char::from_u32(num as u32 + 61).ok_or('a'), // ASCII values for a-z
+        _ => char::from_u32(num as u32 + 33).ok_or('!'),     // ASCII values for special characters
     }
 }
 

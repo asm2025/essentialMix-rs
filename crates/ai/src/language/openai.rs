@@ -10,8 +10,9 @@ use std::{
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 
-use crate::{Result, SourceSize, errors::Error};
+use crate::{Error, Result, SourceSize};
 
+#[allow(non_camel_case_types)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum OpenAiSource {
     gpt_3_5_turbo,
@@ -58,7 +59,7 @@ pub struct ChatGpt<C: Config> {
 
 impl<C: Config> ChatGpt<C> {
     pub fn new(config: C) -> Self {
-        Self::with(
+        Self::from(
             config,
             Some(OpenAiSource::default()),
             ReqwestClient::new(),
@@ -110,26 +111,30 @@ impl<C: Config> ChatGpt<C> {
 
         let messages = [ChatCompletionRequestUserMessageArgs::default()
             .content(prompt)
-            .build()?
+            .build()
+            .map_err(|e| Error::OpenAI(e.to_string()))?
             .into()];
         let request = CreateChatCompletionRequestArgs::default()
             .model(self.source.to_string())
             .max_tokens(self.max_tokens)
             .messages(messages)
-            .build()?;
-        let mut stream = self.client.chat().create_stream(request).await?;
+            .build()
+            .map_err(|e| Error::OpenAI(e.to_string()))?;
+        let mut stream = self
+            .client
+            .chat()
+            .create_stream(request)
+            .await
+            .map_err(|e| Error::OpenAI(e.to_string()))?;
 
         while let Some(result) = stream.next().await {
-            match result {
-                Ok(response) => {
-                    response.choices.iter().for_each(|e| {
-                        if let Some(ref content) = e.delta.content {
-                            self.sender.send(content.clone()).unwrap();
-                        }
-                    });
-                }
-                Err(e) => {
-                    return Err(e.into());
+            let response = result.map_err(|e| Error::OpenAI(e.to_string()))?;
+
+            for choice in &response.choices {
+                if let Some(ref content) = choice.delta.content {
+                    if let Err(e) = self.sender.send(content.clone()) {
+                        return Err(Error::OpenAI(e.to_string()));
+                    }
                 }
             }
         }

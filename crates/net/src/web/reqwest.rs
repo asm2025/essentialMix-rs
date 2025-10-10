@@ -1,6 +1,4 @@
-extern crate reqwest as _reqwest;
-
-use _reqwest::*;
+use ::reqwest::{Client, ClientBuilder, blocking, header};
 
 fn build_default_headers() -> header::HeaderMap {
     let mut headers = header::HeaderMap::new();
@@ -29,44 +27,42 @@ fn build_default_api_headers() -> header::HeaderMap {
     headers
 }
 
-pub fn build_client() -> _reqwest::ClientBuilder {
-    _reqwest::Client::builder()
+pub fn build_client() -> ClientBuilder {
+    Client::builder()
         .default_headers(build_default_headers())
         .cookie_store(true)
         .pool_max_idle_per_host(0)
         .timeout(std::time::Duration::from_secs(30))
 }
 
-pub fn build_blocking_client() -> _reqwest::blocking::ClientBuilder {
-    _reqwest::blocking::Client::builder()
+pub fn build_blocking_client() -> blocking::ClientBuilder {
+    blocking::Client::builder()
         .default_headers(build_default_headers())
         .cookie_store(true)
         .pool_max_idle_per_host(0)
         .timeout(std::time::Duration::from_secs(30))
 }
 
-pub fn build_client_with_user_agent(agent: String) -> _reqwest::ClientBuilder {
+pub fn build_client_with_user_agent(agent: String) -> ClientBuilder {
     build_client().user_agent(agent)
 }
 
-pub fn build_blocking_client_with_user_agent(agent: String) -> _reqwest::blocking::ClientBuilder {
+pub fn build_blocking_client_with_user_agent(agent: String) -> blocking::ClientBuilder {
     build_blocking_client().user_agent(agent)
 }
 
-pub fn build_client_with_headers(headers: header::HeaderMap) -> _reqwest::ClientBuilder {
+pub fn build_client_with_headers(headers: header::HeaderMap) -> ClientBuilder {
     build_client().default_headers(headers)
 }
 
-pub fn build_blocking_client_with_headers(
-    headers: header::HeaderMap,
-) -> _reqwest::blocking::ClientBuilder {
+pub fn build_blocking_client_with_headers(headers: header::HeaderMap) -> blocking::ClientBuilder {
     build_blocking_client().default_headers(headers)
 }
 
-pub fn build_client_for_api() -> _reqwest::ClientBuilder {
+pub fn build_client_for_api() -> ClientBuilder {
     build_client().default_headers(build_default_api_headers())
 }
 
-pub fn build_blocking_client_for_api() -> _reqwest::blocking::ClientBuilder {
+pub fn build_blocking_client_for_api() -> blocking::ClientBuilder {
     build_blocking_client().default_headers(build_default_api_headers())
 }

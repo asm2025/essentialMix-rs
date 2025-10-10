@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use std::time::Duration;
 
-use crate::Result;
+use crate::{Error, Result};
 
 pub const DATE_FORMAT: &str = "%Y-%m-%d";
 pub const DATE_TIME_FORMAT: &str = "%Y-%m-%d %H:%M";
@@ -18,17 +18,19 @@ pub fn parse_date_any(value: &str) -> Result<DateTime<Utc>> {
             NaiveDate::parse_from_str(value, DATE_FORMAT)
                 .map(|d| NaiveDateTime::new(d, NaiveTime::MIN))
         })
-        .unwrap();
+        .map_err(Error::from_std_error)?;
     Ok(Utc.from_utc_datetime(&date))
 }
 
 pub fn parse_date(value: &str) -> Result<DateTime<Utc>> {
-    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_LONG_FORMAT).unwrap();
+    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_LONG_FORMAT)
+        .map_err(Error::from_std_error)?;
     Ok(Utc.from_utc_datetime(&date))
 }
 
 pub fn parse_date_ftz(value: &str) -> Result<DateTime<Utc>> {
-    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_FULL_FORMAT_TZ).unwrap();
+    let date = NaiveDateTime::parse_from_str(value, DATE_TIME_FULL_FORMAT_TZ)
+        .map_err(Error::from_std_error)?;
     Ok(Utc.from_utc_datetime(&date))
 }
 

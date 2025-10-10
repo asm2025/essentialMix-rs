@@ -1,18 +1,17 @@
 use crossterm::{
-    cursor,
+    ExecutableCommand, cursor,
     event::{self, Event, KeyCode, KeyEvent},
-    terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType},
-    ExecutableCommand,
+    terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode},
 };
-use dialoguer::{theme::ColorfulTheme, Select};
+use dialoguer::{Select, theme::ColorfulTheme};
 use std::{
-	thread,
-    io::{stdin, stdout, Write},
+    io::{Write, stdin, stdout},
     str::FromStr,
+    thread,
 };
 use tokio::sync::mpsc::{self, error::TryRecvError};
 
-use crate::{error::emError, Result};
+use crate::{Result, error::emError};
 
 #[derive(Debug)]
 pub struct KeyListener {
@@ -188,7 +187,7 @@ pub fn confirm(prompt: Option<&str>) -> Result<bool> {
 
 pub fn pause() {
     println!("Press any key to continue...");
-    get_char(None).unwrap();
+    let _ = get_char(None);
 }
 
 fn print_prompt(prompt: Option<&str>) {

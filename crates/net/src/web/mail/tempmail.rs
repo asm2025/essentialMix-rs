@@ -3,15 +3,15 @@ use html_entities::decode_html_entities;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::fmt::{Display, Result as DisplayResult};
 
 use crate::{
+    Result,
     date::{parse_date, parse_date_ftz, utc_today},
     error::*,
     random,
     web::reqwest::build_client_for_api,
-    Result,
 };
 
 const URL_TEMP_MAIL: &str = "https://api.internal.temp-mail.io/api/v3/";
@@ -22,17 +22,21 @@ static RGX_EMAIL_FAKE_GENERATE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
 		r#"(?m)(?s)onchange="change_username\(\)".+?value="(.+?)".+? value="(.+?)" id="domainName2""#,
 	)
-	.unwrap()
+	.expect("Failed to compile regex")
 });
 static RGX_EMAIL_FAKE_LINKS: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"(?m)(?s)<a href=".+?<div class="fem from.+?>(.+?)</div>.+?<div class="fem subj.+?>(.+?)</div>.+?<div class="fem time.+?>(.+?)</div>"#)
-        .unwrap()
+        .expect("Failed to compile regex")
 });
 static RGX_EMAIL_FAKE_MESSAGE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?m)(?s)<span>From:.+?<span>(.+?)<span.+?<span>Subject:.+?<h1.+?>(.+?)</h1>.+?<span>Received:.+?<span>(.+?)<span.+?<div class="elementToProof".+?>[\s\n]*(.+?)</div>"#).unwrap()
+    Regex::new(r#"(?m)(?s)<span>From:.+?<span>(.+?)<span.+?<span>Subject:.+?<h1.+?>(.+?)</h1>.+?<span>Received:.+?<span>(.+?)<span.+?<div class="elementToProof".+?>[\s\n]*(.+?)</div>"#).expect("Failed to compile regex")
 });
 
-static __HTTP: Lazy<reqwest::Client> = Lazy::new(|| build_client_for_api().build().unwrap());
+static __HTTP: Lazy<reqwest::Client> = Lazy::new(|| {
+    build_client_for_api()
+        .build()
+        .expect("Failed to create HTTP client")
+});
 
 #[derive(Serialize)]
 struct NewNameLength {
@@ -188,7 +192,7 @@ impl TempMail {
             .await?;
         match json {
             Value::Object(map) => {
-                let email = map.get("email").unwrap().as_str().unwrap();
+                let email = map.get("email")?.as_str()?;
                 Ok(Self::parse(TempMailProvider::Tempmail, email))
             }
             _ => panic!("Invalid response"),
@@ -216,8 +220,8 @@ impl TempMail {
             Some(captures) => captures,
             None => return Err(ElementNotFoundError("username and domain".into()).into()),
         };
-        let username = captures.get(1).unwrap().as_str();
-        let domain = captures.get(2).unwrap().as_str();
+        let username = captures.get(1)?.as_str();
+        let domain = captures.get(2)?.as_str();
         Ok(TempMail {
             provider: TempMailProvider::EmailFake,
             username: username.to_string(),
@@ -332,7 +336,7 @@ impl TempMail {
         if let Some(message) = messages.iter().rev().find(|e| {
             (from.is_empty() || e.from.contains(&from))
                 && (subject.is_empty() || e.subject.contains(&subject))
-                && parse_date_ftz(&e.created_at).unwrap() > date_min
+                && parse_date_ftz(&e.created_at)? > date_min
         }) {
             let url = format!("{}message/{}", URL_TEMP_MAIL, message.id);
             let json: Value = __HTTP.get(&url).send().await?.json().await?;
@@ -380,10 +384,10 @@ impl TempMail {
             .captures_iter(&body)
             .map(|c| {
                 (
-                    c.get(1).unwrap().as_str().to_string(),
-                    c.get(2).unwrap().as_str().to_lowercase(),
-                    c.get(3).unwrap().as_str().to_lowercase(),
-                    parse_date(c.get(4).unwrap().as_str()).unwrap(),
+                    c.get(1)?.as_str().to_string(),
+                    c.get(2)?.as_str().to_lowercase(),
+                    c.get(3)?.as_str().to_lowercase(),
+                    parse_date(c.get(4)?.as_str())?,
                 )
             })
             .collect();
@@ -406,12 +410,12 @@ impl TempMail {
             }
         }
 
-        let body = decode_html_entities(&body).unwrap();
+        let body = decode_html_entities(&body)?;
 
         if let Some(matches) = RGX_EMAIL_FAKE_MESSAGE.captures(&body) {
-            let f = matches.get(2).unwrap().as_str().to_lowercase();
-            let s = matches.get(3).unwrap().as_str().to_lowercase();
-            let d = parse_date(matches.get(4).unwrap().as_str()).unwrap();
+            let f = matches.get(2)?.as_str().to_lowercase();
+            let s = matches.get(3)?.as_str().to_lowercase();
+            let d = parse_date(matches.get(4)?.as_str())?;
 
             if (!f.is_empty() && !f.contains(&from))
                 || (!s.is_empty() && !s.contains(&from))
@@ -420,7 +424,7 @@ impl TempMail {
                 return Ok("".to_string());
             }
 
-            let text = matches.get(5).unwrap().as_str();
+            let text = matches.get(5)?.as_str();
             return Ok(Self::extract_value(text, expected, size));
         }
 
@@ -481,7 +485,7 @@ impl TempMail {
         if let Some(message) = messages.iter().rev().find(|e| {
             (from.is_empty() || e.from.contains(&from))
                 && (subject.is_empty() || e.subject.contains(&subject))
-                && parse_date(&e.date).unwrap() > date_min
+                && parse_date(&e.date)? > date_min
         }) {
             let url = format!(
                 "{}?action=readMessage&login={}&domain={}&id={}",

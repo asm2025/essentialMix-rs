@@ -40,8 +40,7 @@ impl Whisper {
         let model = WhisperBuilder::default()
             .with_source(source)
             .build()
-            .await
-            .unwrap();
+            .await?;
         Ok(Self::new(model))
     }
 
@@ -50,8 +49,7 @@ impl Whisper {
             .with_source(source)
             .with_language(Some(language))
             .build()
-            .await
-            .unwrap();
+            .await?;
         Ok(Self::new(model))
     }
 
@@ -60,9 +58,9 @@ impl Whisper {
         file_name: T,
         callback: impl Fn(&str) -> (),
     ) -> Result<()> {
-        let file = File::open(file_name).unwrap();
-        let source = Decoder::new(BufReader::new(file)).unwrap();
-        let mut stream = self.model.transcribe(source).unwrap();
+        let file = File::open(file_name)?;
+        let source = Decoder::new(BufReader::new(file))?;
+        let mut stream = self.model.transcribe(source)?;
         block_on(async move {
             while let Some(result) = stream.next().await {
                 callback(result.text());
@@ -76,8 +74,8 @@ impl Whisper {
         file_name: T,
         callback: impl Fn(&str) -> (),
     ) -> Result<()> {
-        let file = File::open(file_name).unwrap();
-        let source = Decoder::new(BufReader::new(file)).unwrap();
+        let file = File::open(file_name)?;
+        let source = Decoder::new(BufReader::new(file))?;
         let mut transcription = self.model.transcribe(source);
 
         while let Some(result) = transcription.next().await {
@@ -92,9 +90,9 @@ impl Whisper {
         file_name: T,
         sender: UnboundedSender<Segment>,
     ) -> Result<Stream> {
-        let file = File::open(file_name).unwrap();
-        let source = Decoder::new(BufReader::new(file)).unwrap();
-        let stream = self.model.transcribe_into(source, sender).unwrap();
+        let file = File::open(file_name)?;
+        let source = Decoder::new(BufReader::new(file))?;
+        let stream = self.model.transcribe_into(source, sender)?;
         Ok(stream)
     }
 }

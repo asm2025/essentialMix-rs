@@ -11,8 +11,6 @@ pub const LOG_DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S.%f";
 pub const LOG_SIZE_MIN: usize = 1024 * 1024 * 2;
 pub const LOG_SIZE_MAX: usize = 1024 * 1024 * 10;
 
-pub use essentialmix_core::*;
-
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LogLevel {
     Off,

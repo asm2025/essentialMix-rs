@@ -11,6 +11,15 @@ pub enum Error {
     #[error("Not implemented")]
     NotImplemented,
 
+    #[error("Item not found. {0}")]
+    NotFound(String),
+
+    #[error("No input was provided.")]
+    NoInput,
+
+    #[error("Invalid input. {0}")]
+    Invalid(String),
+
     #[error("Invalid operation. {0}")]
     InvalidOperation(String),
 
@@ -20,20 +29,23 @@ pub enum Error {
     #[error("Invalid file. {0}")]
     InvalidFile(String),
 
-    #[error("Operation timed out")]
-    Timeout,
-
-    #[error("No input was provided.")]
-    NoInput,
+    #[error("Missing error. {0}")]
+    Missing(String),
 
     #[error("Argument error. {0}")]
     Argument(String),
 
-    #[error("Invalid input. {0}")]
-    Invalid(String),
+    #[error("Operation timed out")]
+    Timeout,
 
-    #[error("Missing error. {0}")]
-    Missing(String),
+    #[error("Operation timed out")]
+    Poisoned(String),
+
+    #[error(transparent)]
+    Serialization(#[from] serde_json::Error),
+
+    #[error("Session error. {0}")]
+    Session(String),
 
     #[error("Http error. {0}")]
     Http(String),
@@ -44,15 +56,34 @@ pub enum Error {
     #[error("Command error {0}. {1}")]
     Command(i32, String),
 
-    #[error("Item not found. {0}")]
-    NotFound(String),
-
-    #[error("{0}")]
-    Io(#[from] std::io::Error),
-
-    #[error("Error exceeded. {0}")]
+    #[error("Limit exceeded. {0}")]
     Exceeded(String),
+
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
 
     #[error("Application exited with error {0}")]
     ExitCode(i32),
+
+    #[error("OpenAI error. {0}")]
+    OpenAI(String),
+
+    #[error("Llama error. {0}")]
+    Llama(String),
+
+    #[error("{0}")]
+    Other(String),
+
+    #[error(transparent)]
+    Error(#[from] Box<dyn std::error::Error + Send + Sync>),
+}
+
+impl Error {
+    pub fn from_other_error(message: String) -> Self {
+        Error::Other(message)
+    }
+
+    pub fn from_std_error<E: std::error::Error + Send + Sync + 'static>(err: E) -> Self {
+        Error::Error(Box::new(err))
+    }
 }

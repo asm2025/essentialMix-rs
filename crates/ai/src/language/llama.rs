@@ -3,6 +3,18 @@ use kalosm::*;
 use super::{ModelSource, SourceSize};
 use crate::Result;
 
+impl From<SourceSize> for language::LlamaSource {
+    fn from(size: SourceSize) -> Self {
+        match size {
+            SourceSize::Tiny => language::LlamaSource::llama_3_2_1b_chat(),
+            SourceSize::Small => language::LlamaSource::llama_7b_chat(),
+            SourceSize::Base => language::LlamaSource::llama_8b_chat(),
+            SourceSize::Medium => language::LlamaSource::llama_13b_chat(),
+            SourceSize::Large => language::LlamaSource::llama_70b_chat(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct LlamaSource;
 
@@ -19,21 +31,16 @@ impl ModelSource for LlamaSource {
     }
 
     async fn new() -> Result<Self::Model> {
-        Self::create(Self::default_size()).await
+        Self::from_size(Self::default_size()).await
     }
 
-    async fn create(size: SourceSize) -> Result<Self::Model> {
-        let source = match size {
-            SourceSize::Tiny => language::LlamaSource::llama_3_2_1b_chat(),
-            SourceSize::Small => language::LlamaSource::llama_7b_chat(),
-            SourceSize::Base => language::LlamaSource::llama_8b_chat(),
-            SourceSize::Medium => language::LlamaSource::llama_13b_chat(),
-            SourceSize::Large => language::LlamaSource::llama_70b_chat(),
-        };
+    async fn from_size(size: SourceSize) -> Result<Self::Model> {
+        let source = size.into();
         let model = language::Llama::builder()
             .with_source(source)
             .build()
-            .await?;
+            .await
+            .map_err(|e| Error::Llama(e.to_string()));
         Ok(model)
     }
 }
