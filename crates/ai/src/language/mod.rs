@@ -53,12 +53,16 @@ impl<T> ChatModelType for T where
 pub trait ModelSource: Send + Sync + Clone {
     type Model: ChatModelType + Send + Sync + 'static;
     type Builder;
+    type Source;
 
     fn default_size() -> SourceSize;
     fn builder() -> Self::Builder;
     fn new() -> impl std::future::Future<Output = Result<Self::Model>> + Send;
     fn from_size(size: SourceSize)
     -> impl std::future::Future<Output = Result<Self::Model>> + Send;
+    fn from_source(
+        source: Self::Source,
+    ) -> impl std::future::Future<Output = Result<Self::Model>> + Send;
 }
 
 /**
@@ -166,7 +170,8 @@ where
     /// Load chat history from file
     pub async fn load_session<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let content = fs::read_to_string(path)?;
-        let history: Vec<ChatMessage> = serde_json::from_str(&content)?;
+        let history: Vec<ChatMessage> =
+            serde_json::from_str(&content).map_err(Error::from_std_error)?;
 
         // let mut llm = language::Llama::new().await?;
         // let o: language::TextCompletionBuilder<language::Llama> = llm.complete(prompt);
@@ -199,7 +204,7 @@ where
     /// Save current session to file
     pub async fn save_session<T: AsRef<Path>>(&self, path: T) -> Result<()> {
         let history = self.history().await?;
-        let json = serde_json::to_string_pretty(&history)?;
+        let json = serde_json::to_string_pretty(&history).map_err(Error::from_std_error)?;
         fs::write(path, json)?;
         Ok(())
     }

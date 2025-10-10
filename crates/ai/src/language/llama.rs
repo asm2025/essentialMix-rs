@@ -21,6 +21,7 @@ pub struct LlamaSource;
 impl ModelSource for LlamaSource {
     type Model = language::Llama;
     type Builder = language::LlamaBuilder;
+    type Source = language::LlamaSource;
 
     fn default_size() -> SourceSize {
         SourceSize::Base
@@ -36,6 +37,15 @@ impl ModelSource for LlamaSource {
 
     async fn from_size(size: SourceSize) -> Result<Self::Model> {
         let source = size.into();
+        let model = language::Llama::builder()
+            .with_source(source)
+            .build()
+            .await
+            .map_err(|e| Error::Llama(e.to_string()))?;
+        Ok(model)
+    }
+
+    async fn from_source(source: Self::Source) -> Result<Self::Model> {
         let model = language::Llama::builder()
             .with_source(source)
             .build()

@@ -47,9 +47,6 @@ pub enum Error {
     #[error("Operation timed out")]
     Poisoned(String),
 
-    #[error(transparent)]
-    Serialization(#[from] serde_json::Error),
-
     #[error("Session error. {0}")]
     Session(String),
 

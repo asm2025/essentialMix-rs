@@ -8,7 +8,7 @@ use std::{
 };
 
 use super::directory;
-use crate::Result;
+use crate::{Error, Result};
 
 const LINES_BUFFER_DEFAULT: usize = 1000;
 
@@ -246,7 +246,7 @@ impl FileEx for std::fs::File {
 
     fn read_json<T: de::DeserializeOwned>(&self) -> Result<T> {
         let reader = BufReader::new(self);
-        let data: T = serde_json::from_reader(reader)?;
+        let data: T = serde_json::from_reader(reader).map_err(Error::from_std_error)?;
         Ok(data)
     }
 
@@ -255,7 +255,7 @@ impl FileEx for std::fs::File {
             Some(true) => serde_json::to_string_pretty,
             _ => serde_json::to_string,
         };
-        let serialized = serialize(data)?;
+        let serialized = serialize(data).map_err(Error::from_std_error)?;
         self.write_all(serialized.as_bytes())?;
         Ok(())
     }

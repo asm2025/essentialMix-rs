@@ -10,7 +10,7 @@ use std::{
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 
-use crate::{Error, Result, SourceSize};
+use crate::{Error, Result, SourceSize, language::ModelSource};
 
 #[allow(non_camel_case_types)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -142,3 +142,5 @@ impl<C: Config> ChatGpt<C> {
         Ok(())
     }
 }
+
+impl<C: Config> ModelSource for ChatGpt<C> {}
