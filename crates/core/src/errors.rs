@@ -38,6 +38,12 @@ pub enum Error {
     #[error("Operation timed out")]
     Timeout,
 
+    #[error("Queue already started")]
+    QueueStarted,
+
+    #[error("Queue already completed")]
+    QueueCompleted,
+
     #[error("Operation timed out")]
     Poisoned(String),
 

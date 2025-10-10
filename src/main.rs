@@ -5,7 +5,7 @@ mod tests;
 use dotenvy::dotenv;
 use tokio::{task, time::Duration};
 
-use essentialmix::{Error, Result, set_debug};
+use emix::{Error, Result, set_debug};
 
 #[tokio::main]
 async fn main() -> Result<()> {

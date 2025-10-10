@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Mutcond {
     pair: Arc<(Mutex<bool>, Condvar)>,
 }
@@ -15,7 +15,7 @@ impl Mutcond {
         }
     }
 
-    pub fn is_signaled(&self) -> LockResult<MutexGuard<bool>> {
+    pub fn is_signaled<'a>(&'a self) -> LockResult<MutexGuard<'a, bool>> {
         let (lock, _) = &*self.pair;
         lock.lock()
     }

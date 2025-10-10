@@ -1,4 +1,4 @@
-use essentialmix::{
+use emix::{
     Result,
     io::{
         directory,

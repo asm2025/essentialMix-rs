@@ -15,7 +15,7 @@ image = "0.24.9"
 lazy_static = "1"
 log = "0"
 rand = "0"
-essentialmix = { workspace = true }
+emix = { workspace = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
@@ -27,7 +27,7 @@ members = [
 	"crates/core",
 	"crates/log",
 	"crates/net",
-#	"crates/threading",
+	"crates/threading",
 ]
 
 [workspace.package]
@@ -37,12 +37,12 @@ license = "MIT"
 authors = ["asm <asm2do@gmail.com>"]
 
 [workspace.dependencies]
-essentialmix_ai = { path = "crates/ai" }
-essentialmix = { path = "crates/base" }
-essentialmix_core = { path = "crates/core" }
-essentialmix_log = { path = "crates/log" }
-essentialmix_net = { path = "crates/net" }
-#essentialmix_threading = { path = "crates/threading" }
+emix_ai = { path = "crates/ai" }
+emix = { path = "crates/base" }
+emix_core = { path = "crates/core" }
+emix_log = { path = "crates/log" }
+emix_net = { path = "crates/net" }
+emix_threading = { path = "crates/threading" }
 parking_lot = "0"
 
 [profile.dist]

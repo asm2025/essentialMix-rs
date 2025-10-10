@@ -1,9 +1,10 @@
 use crossbeam::queue::SegQueue;
 use std::{
     mem,
+    pin::Pin,
     sync::{
-        atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
     thread,
 };
@@ -12,10 +13,9 @@ use tokio::{
     time::{Duration, Instant},
 };
 
-use super::{cond::Mutcond, *};
-use crate::{error::*, Result};
+use crate::{constants::*, *};
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConsumerOptions {
     pub threads: usize,
     pub threshold: Duration,
@@ -192,15 +192,15 @@ impl<T: StaticTaskItem> Consumer<T> {
 
     pub fn start<H: TaskDelegation<Consumer<T>, T>>(&self, handler: &H) -> Result<()> {
         if self.is_cancelled() {
-            return Err(CanceledError.into());
+            return Err(Error::Canceled);
         }
 
         if self.is_completed() && self.is_empty() {
-            return Err(QueueCompletedError.into());
+            return Err(Error::QueueCompleted);
         }
 
         if !self.set_started(true) {
-            return Err(QueueStartedError.into());
+            return Err(Error::QueueStarted);
         }
 
         self.set_consumers(self.options.threads);
@@ -236,7 +236,7 @@ impl<T: StaticTaskItem> Consumer<T> {
                                 if !handler.on_completed(
                                     &this,
                                     &item,
-                                    &TaskResult::Error(e.get_message()),
+                                    &TaskResult::Error(e.to_string()),
                                 ) {
                                     this.dec_running();
                                     break;
@@ -294,7 +294,7 @@ impl<T: StaticTaskItem> Consumer<T> {
                             if !handler.on_completed(
                                 &this,
                                 &item,
-                                &TaskResult::Error(e.get_message()),
+                                &TaskResult::Error(e.to_string()),
                             ) {
                                 this.dec_running();
                                 break;
@@ -323,11 +323,11 @@ impl<T: StaticTaskItem> Consumer<T> {
 
     pub fn enqueue(&self, item: T) -> Result<()> {
         if self.is_cancelled() {
-            return Err(CanceledError.into());
+            return Err(Error::Canceled);
         }
 
         if self.is_completed() {
-            return Err(QueueCompletedError.into());
+            return Err(Error::QueueCompleted);
         }
 
         self.items.push(item);

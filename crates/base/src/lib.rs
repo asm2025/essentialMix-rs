@@ -5,4 +5,4 @@ pub mod io;
 pub mod random;
 pub mod string;
 
-pub use essentialmix_core::*;
+pub use emix_core::*;

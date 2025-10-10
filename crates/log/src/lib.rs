@@ -3,7 +3,7 @@ pub mod log4rs;
 #[cfg(feature = "slog")]
 pub mod slog;
 
-pub use essentialmix_core::*;
+pub use emix_core::*;
 
 use log::LevelFilter;
 

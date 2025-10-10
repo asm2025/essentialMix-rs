@@ -1,4 +1,4 @@
-use essentialmix::{Result, error::InvalidResponseError, web::*};
+use emix::{Result, error::InvalidResponseError, web::*};
 use serde_json::Value;
 use std::collections::HashMap;
 

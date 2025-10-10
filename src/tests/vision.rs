@@ -1,5 +1,5 @@
 use image::ImageFormat;
-use essentialmix::{
+use emix::{
     input,
     io::{
         directory,

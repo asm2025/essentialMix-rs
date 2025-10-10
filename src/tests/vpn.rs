@@ -2,7 +2,7 @@ use humantime::format_duration;
 use lazy_static::lazy_static;
 use std::{thread, time::Duration};
 
-use essentialmix::{
+use emix::{
     vpn::{self, ExpressVPNStatus},
     web::{
         get_public_ip_async,

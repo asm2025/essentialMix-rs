@@ -1,7 +1,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = "essentialmix_core"
-description = "essentialmix_core is a Rust library that has some basic utility functions and components."
+name = "emix_core"
+description = "emix_core is a Rust library that has some basic utility functions and components."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

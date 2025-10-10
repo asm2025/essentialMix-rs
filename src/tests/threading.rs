@@ -1,4 +1,4 @@
-use essentialmix::{threading::*, Result};
+use emix::{threading::*, Result};
 use std::{
     future::Future,
     pin::Pin,

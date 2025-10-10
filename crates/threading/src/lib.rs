@@ -1,11 +1,7 @@
 mod cond;
-pub use self::cond::*;
-mod consumer;
-pub use self::consumer::*;
-mod injector_consumer;
-pub use self::injector_consumer::*;
-mod producer_consumer;
-pub use self::producer_consumer::*;
+pub use crate::cond::*;
+pub mod constants;
+pub mod consumer;
 mod spinner;
 pub use self::spinner::*;
 
@@ -16,27 +12,9 @@ use tokio::{
     time::{self, Duration},
 };
 
-use crate::{
-    error::{CanceledError, TimedoutError},
-    Result,
-};
+pub use emix_core::*;
 
-const CAPACITY_DEF: usize = 0;
-const THREADS_DEF: usize = 1;
-pub const THREADS_MIN: usize = 1;
-pub const THREADS_MAX: usize = 255;
-const QUEUE_BEHAVIOR_DEF: QueueBehavior = QueueBehavior::FIFO;
-const THRESHOLD_DEF: Duration = Duration::ZERO;
-const SLEEP_AFTER_SEND_DEF: Duration = Duration::ZERO;
-const PEEK_TIMEOUT_DEF: Duration = Duration::from_millis(50);
-const PEEK_TIMEOUT_MIN: Duration = Duration::from_millis(10);
-const PEEK_TIMEOUT_MAX: Duration = Duration::from_secs(5);
-const PAUSE_TIMEOUT_DEF: Duration = Duration::from_millis(50);
-const PAUSE_TIMEOUT_MIN: Duration = Duration::from_millis(10);
-const PAUSE_TIMEOUT_MAX: Duration = Duration::from_secs(5);
-pub const INTERVAL: u64 = 100;
-
-#[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TaskResult {
     #[default]
     None,
@@ -58,7 +36,7 @@ impl fmt::Display for TaskResult {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum QueueBehavior {
     #[default]
     FIFO,
@@ -93,23 +71,23 @@ pub trait AwaitableConsumer<T: TaskItem>: StaticTaskItem {
     fn is_finished(&self) -> bool;
 }
 
-fn wait<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
+pub fn wait<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     this: &TPC,
     finished: &Arc<Mutcond>,
 ) -> Result<()> {
     match finished.wait_while(|| !this.is_cancelled() && !this.is_finished()) {
         Ok(_) => {
             if this.is_cancelled() {
-                Err(CanceledError.into())
+                Err(Error::Canceled)
             } else {
                 Ok(())
             }
         }
-        Err(_) => Err(CanceledError.into()),
+        Err(_) => Err(Error::Canceled),
     }
 }
 
-async fn wait_async<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
+pub async fn wait_async<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     this: &TPC,
     finished: &Arc<Notify>,
 ) -> Result<()> {
@@ -122,13 +100,13 @@ async fn wait_async<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     }
 
     if this.is_cancelled() {
-        return Err(CanceledError.into());
+        return Err(Error::Canceled);
     }
 
     Ok(())
 }
 
-fn wait_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
+pub fn wait_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     this: &TPC,
     finished: &Arc<Mutcond>,
     cond: impl Fn(&TPC) -> bool,
@@ -136,16 +114,16 @@ fn wait_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     match finished.wait_while(|| !this.is_cancelled() && !this.is_finished() && !cond(this)) {
         Ok(_) => {
             if this.is_cancelled() {
-                Err(CanceledError.into())
+                Err(Error::Canceled)
             } else {
                 Ok(())
             }
         }
-        Err(_) => Err(CanceledError.into()),
+        Err(_) => Err(Error::Canceled),
     }
 }
 
-async fn wait_until_async<
+pub async fn wait_until_async<
     TPC: AwaitableConsumer<T>,
     T: StaticTaskItem,
     F: Fn(&TPC) -> Pin<Box<dyn Future<Output = bool> + Send>>,
@@ -162,63 +140,63 @@ async fn wait_until_async<
     }
 
     if this.is_cancelled() {
-        return Err(CanceledError.into());
+        return Err(Error::Canceled);
     }
 
     Ok(())
 }
 
-fn wait_for<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
+pub fn wait_for<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     this: &TPC,
     timeout: Duration,
     finished: &Arc<Mutcond>,
 ) -> Result<()> {
     if timeout.is_zero() {
-        return Err(TimedoutError.into());
+        return Err(Error::Timeout);
     }
 
     match finished.wait_timeout_while(|| !this.is_cancelled() && !this.is_finished(), timeout) {
         Ok(_) => {
             if this.is_cancelled() {
-                Err(CanceledError.into())
+                Err(Error::Canceled)
             } else {
                 Ok(())
             }
         }
-        Err(_) => Err(TimedoutError.into()),
+        Err(_) => Err(Error::Timeout),
     }
 }
 
-async fn wait_for_async<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
+pub async fn wait_for_async<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     this: &TPC,
     timeout: Duration,
     finished: &Arc<Notify>,
 ) -> Result<()> {
     if timeout.is_zero() {
-        return Err(TimedoutError.into());
+        return Err(Error::Timeout);
     }
 
     let result = time::timeout(timeout, finished.notified()).await;
     match result {
         Ok(_) => {
             if this.is_cancelled() {
-                Err(CanceledError.into())
+                Err(Error::Canceled)
             } else {
                 Ok(())
             }
         }
-        Err(_) => Err(TimedoutError.into()),
+        Err(_) => Err(Error::Timeout),
     }
 }
 
-fn wait_for_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
+pub fn wait_for_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     this: &TPC,
     timeout: Duration,
     finished: &Arc<Mutcond>,
     cond: impl Fn(&TPC) -> bool,
 ) -> Result<()> {
     if timeout.is_zero() {
-        return Err(TimedoutError.into());
+        return Err(Error::Timeout);
     }
     match finished.wait_timeout_while(
         || !this.is_cancelled() && !this.is_finished() && !cond(this),
@@ -226,16 +204,16 @@ fn wait_for_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
     ) {
         Ok(_) => {
             if this.is_cancelled() {
-                Err(CanceledError.into())
+                Err(Error::Canceled)
             } else {
                 Ok(())
             }
         }
-        Err(_) => Err(TimedoutError.into()),
+        Err(_) => Err(Error::Timeout),
     }
 }
 
-async fn wait_for_until_async<
+pub async fn wait_for_until_async<
     TPC: AwaitableConsumer<T>,
     T: StaticTaskItem,
     F: Fn(&TPC) -> Pin<Box<dyn Future<Output = bool> + Send>>,
@@ -246,31 +224,31 @@ async fn wait_for_until_async<
     cond: F,
 ) -> Result<()> {
     if timeout.is_zero() {
-        return Err(TimedoutError.into());
+        return Err(Error::Timeout);
     }
 
     let start = time::Instant::now();
 
     while !cond(this).await {
         if this.is_cancelled() {
-            return Err(CanceledError.into());
+            return Err(Error::Canceled);
         }
 
         if time::Instant::now().duration_since(start) > timeout {
-            return Err(TimedoutError.into());
+            return Err(Error::Timeout);
         }
 
-        match time::timeout(PEEK_TIMEOUT_DEF, finished.notified()).await {
+        match time::timeout(constants::PEEK_TIMEOUT_DEF, finished.notified()).await {
             Ok(_) => {
                 if this.is_cancelled() {
-                    return Err(CanceledError.into());
+                    return Err(Error::Canceled);
                 }
 
                 return Ok(());
             }
             Err(_) => {
                 if time::Instant::now().duration_since(start) > timeout {
-                    return Err(TimedoutError.into());
+                    return Err(Error::Timeout);
                 }
             }
         }

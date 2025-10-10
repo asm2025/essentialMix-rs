@@ -7,7 +7,7 @@ pub mod language;
 #[cfg(feature = "vision")]
 pub mod vision;
 
-pub use essentialmix::{Error, Result};
+pub use emix::{Error, Result};
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SourceSize {

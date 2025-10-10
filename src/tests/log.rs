@@ -1,6 +1,6 @@
 use log::{debug, error, info, trace, warn};
 
-use essentialmix::{
+use emix::{
     io::{directory, path::AsPath},
     log::{log4rs, slog},
     Result,

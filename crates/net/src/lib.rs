@@ -2,4 +2,4 @@
 pub mod vpn;
 pub mod web;
 
-pub use essentialmix_core::*;
+pub use emix_core::*;

@@ -1,5 +1,5 @@
 use chrono::{Duration, Utc};
-use essentialmix::{random, Result};
+use emix::{Result, random};
 
 pub fn test_random() -> Result<()> {
     println!("Testing random...");

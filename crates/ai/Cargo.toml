@@ -1,14 +1,14 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = "essentialmix_ai"
-description = "essentialmix_ai is a Rust library that has some basic utility functions and components."
+name = "emix_ai"
+description = "emix_ai is a Rust library that has some basic utility functions and components."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
 [dependencies]
-essentialmix = { workspace = true}
+emix = { workspace = true}
 async-openai = { version = "0", optional = true }
 backoff = "0"
 futures = "0"

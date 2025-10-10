@@ -1,7 +1,7 @@
 use kalosm::*;
 
 use super::{ModelSource, SourceSize};
-use crate::Result;
+use crate::{Error, Result};
 
 impl From<SourceSize> for language::LlamaSource {
     fn from(size: SourceSize) -> Self {
@@ -40,7 +40,7 @@ impl ModelSource for LlamaSource {
             .with_source(source)
             .build()
             .await
-            .map_err(|e| Error::Llama(e.to_string()));
+            .map_err(|e| Error::Llama(e.to_string()))?;
         Ok(model)
     }
 }
