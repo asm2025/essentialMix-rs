@@ -8,7 +8,7 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-emix_core = { workspace = true }
+emixcore = { workspace = true }
 chrono = "0"
 crossterm = { version = "0", optional = true }
 csv = "1"

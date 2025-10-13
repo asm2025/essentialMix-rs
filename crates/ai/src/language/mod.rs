@@ -172,11 +172,7 @@ where
         let content = fs::read_to_string(path)?;
         let history: Vec<ChatMessage> =
             serde_json::from_str(&content).map_err(Error::from_std_error)?;
-
-        // let mut llm = language::Llama::new().await?;
-        // let o: language::TextCompletionBuilder<language::Llama> = llm.complete(prompt);
-
-        //let chat = self.model.lock()?;
+        let chat = self.model.lock()?;
 
         // Clear existing history and rebuild from saved data
         // Note: This assumes the Chat API allows rebuilding from history

@@ -12,7 +12,7 @@ use tokio::{
     time::{self, Duration},
 };
 
-pub use emix_core::*;
+pub use emixcore::*;
 
 #[derive(Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TaskResult {

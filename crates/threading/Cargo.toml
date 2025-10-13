@@ -1,14 +1,14 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = "emix_threading"
-description = "emix_threading is a Rust library that has some basic utility functions and components."
+name = "emixthreading"
+description = "emixthreading is a Rust library that has some basic utility functions and components."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
 [dependencies]
-emix_core = { workspace = true }
+emixcore = { workspace = true }
 crossbeam = "0"
 futures = "0"
 glob = "0"

@@ -1,16 +1,16 @@
 use async_openai::*;
 use config::Config;
 use futures::StreamExt;
-use kalosm::language::prompt_input;
+use kalosm::*;
 use reqwest::Client as ReqwestClient;
 use std::{
-    fmt,
+    cmp, fmt,
     sync::{Arc, Mutex},
 };
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
+use tokio::sync::mpsc::{Receiver, Sender, channel};
 use types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 
-use crate::{Error, Result, SourceSize, language::ModelSource};
+use crate::{Error, Result, SourceSize};
 
 #[allow(non_camel_case_types)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -53,8 +53,8 @@ pub struct ChatGpt<C: Config> {
     client: Arc<Client<C>>,
     source: OpenAiSource,
     max_tokens: u32,
-    sender: UnboundedSender<String>,
-    receiver: Arc<Mutex<UnboundedReceiver<String>>>,
+    sender: Sender<String>,
+    receiver: Arc<Mutex<Receiver<String>>>,
 }
 
 impl<C: Config> ChatGpt<C> {
@@ -64,21 +64,28 @@ impl<C: Config> ChatGpt<C> {
             Some(OpenAiSource::default()),
             ReqwestClient::new(),
             Default::default(),
+            None,
         )
     }
 
-    pub fn from_size(config: C, size: SourceSize) -> Self {
+    pub fn from_size(config: C, size: SourceSize, capacity: Option<usize>) -> Self {
         let source = size.into();
         Self::from(
             config,
             Some(source),
             ReqwestClient::new(),
             Default::default(),
+            capacity,
         )
     }
 
-    pub fn from_client(config: C, client: ReqwestClient, source: Option<OpenAiSource>) -> Self {
-        Self::from(config, source, client, Default::default())
+    pub fn from_client(
+        config: C,
+        client: ReqwestClient,
+        source: Option<OpenAiSource>,
+        capacity: Option<usize>,
+    ) -> Self {
+        Self::from(config, source, client, Default::default(), capacity)
     }
 
     pub fn from(
@@ -86,8 +93,10 @@ impl<C: Config> ChatGpt<C> {
         source: Option<OpenAiSource>,
         client: ReqwestClient,
         backoff: backoff::ExponentialBackoff,
+        capacity: Option<usize>,
     ) -> Self {
-        let (sender, receiver) = unbounded_channel();
+        let capacity = cmp::max(capacity.unwrap_or(128), 4);
+        let (sender, receiver) = channel(capacity);
         Self {
             client: Arc::new(Client::build(client, config, backoff)),
             source: source.unwrap_or_default(),
@@ -97,14 +106,14 @@ impl<C: Config> ChatGpt<C> {
         }
     }
 
-    pub fn subscribe(&self) -> Arc<Mutex<UnboundedReceiver<String>>> {
+    pub fn subscribe(&self) -> Arc<Mutex<Receiver<String>>> {
         Arc::clone(&self.receiver)
     }
 
     pub async fn prompt<T: AsRef<str>>(&self, prompt: T) -> Result<()> {
         let prompt = prompt.as_ref();
         let prompt = if prompt.is_empty() { "\n>" } else { prompt };
-        let prompt = prompt_input(prompt)?;
+        let prompt = language::prompt_input(prompt)?;
         if prompt.is_empty() {
             return Err(Error::NoInput);
         }
@@ -132,7 +141,7 @@ impl<C: Config> ChatGpt<C> {
 
             for choice in &response.choices {
                 if let Some(ref content) = choice.delta.content {
-                    if let Err(e) = self.sender.send(content.clone()) {
+                    if let Err(e) = self.sender.send(content.clone()).await {
                         return Err(Error::OpenAI(e.to_string()));
                     }
                 }
@@ -142,5 +151,3 @@ impl<C: Config> ChatGpt<C> {
         Ok(())
     }
 }
-
-impl<C: Config> ModelSource for ChatGpt<C> {}

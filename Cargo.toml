@@ -37,12 +37,12 @@ license = "MIT"
 authors = ["asm <asm2do@gmail.com>"]
 
 [workspace.dependencies]
-emix_ai = { path = "crates/ai" }
+emixai = { path = "crates/ai" }
 emix = { path = "crates/base" }
-emix_core = { path = "crates/core" }
-emix_log = { path = "crates/log" }
-emix_net = { path = "crates/net" }
-emix_threading = { path = "crates/threading" }
+emixcore = { path = "crates/core" }
+emixlog = { path = "crates/log" }
+emixnet = { path = "crates/net" }
+emixthreading = { path = "crates/threading" }
 parking_lot = "0"
 
 [profile.dist]

@@ -1610,7 +1610,7 @@ dependencies = [
  "crossterm",
  "csv",
  "dialoguer",
- "emix_core",
+ "emixcore",
  "execute",
  "fake",
  "fs_extra",
@@ -1625,7 +1625,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "emix_ai"
+name = "emixai"
 version = "0.1.0"
 dependencies = [
  "async-openai",
@@ -1643,7 +1643,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "emix_core"
+name = "emixcore"
 version = "0.1.0"
 dependencies = [
  "num_cpus",
@@ -1651,10 +1651,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "emix_log"
+name = "emixlog"
 version = "0.1.0"
 dependencies = [
- "emix_core",
+ "emixcore",
  "file-rotate",
  "log",
  "log4rs",
@@ -1669,11 +1669,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "emix_net"
+name = "emixnet"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "emix_core",
+ "emixcore",
  "execute",
  "html-entities",
  "http-body-util",
@@ -1689,11 +1689,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "emix_threading"
+name = "emixthreading"
 version = "0.1.0"
 dependencies = [
  "crossbeam",
- "emix_core",
+ "emixcore",
  "futures",
  "glob",
  "indicatif",
