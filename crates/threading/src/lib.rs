@@ -83,7 +83,7 @@ pub fn wait<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
                 Ok(())
             }
         }
-        Err(_) => Err(Error::Canceled),
+        Err(e) => Err(e),
     }
 }
 
@@ -119,7 +119,7 @@ pub fn wait_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
                 Ok(())
             }
         }
-        Err(_) => Err(Error::Canceled),
+        Err(e) => Err(e),
     }
 }
 
@@ -163,7 +163,13 @@ pub fn wait_for<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
                 Ok(())
             }
         }
-        Err(_) => Err(Error::Timeout),
+        Err(e) => {
+            // Preserve Poisoned errors, but treat other errors as timeout
+            match e {
+                Error::Poisoned(_) => Err(e),
+                _ => Err(Error::Timeout),
+            }
+        }
     }
 }
 
@@ -209,7 +215,13 @@ pub fn wait_for_until<TPC: AwaitableConsumer<T>, T: StaticTaskItem>(
                 Ok(())
             }
         }
-        Err(_) => Err(Error::Timeout),
+        Err(e) => {
+            // Preserve Poisoned errors, but treat other errors as timeout
+            match e {
+                Error::Poisoned(_) => Err(e),
+                _ => Err(Error::Timeout),
+            }
+        }
     }
 }
 

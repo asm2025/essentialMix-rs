@@ -1,8 +1,8 @@
 #[cfg(feature = "mail")]
 pub mod mail;
-pub mod reqwest;
+pub mod reqwestx;
 
-use ::reqwest::{Client, blocking::Client as BlockingClient};
+use reqwest::{Client, blocking::Client as BlockingClient};
 use url::{ParseError, Url};
 use urlencoding::{decode, encode};
 

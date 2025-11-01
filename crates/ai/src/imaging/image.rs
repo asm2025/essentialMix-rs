@@ -1,9 +1,9 @@
-use futures::executor::block_on;
+use futures::{executor::block_on, stream::StreamExt};
 use image::{ImageBuffer, Rgb};
-use kalosm::{vision::*, *};
+use kalosm::vision::{Wuerstchen, WuerstchenInferenceSettings};
 use std::sync::Arc;
 
-use crate::Result;
+use crate::{Error, Result};
 
 pub struct Image {
     model: Arc<Wuerstchen>,
@@ -11,9 +11,9 @@ pub struct Image {
 
 impl Image {
     pub fn new(model: Wuerstchen) -> Self {
-        Ok(Self {
+        Self {
             model: Arc::new(model),
-        })
+        }
     }
 
     pub async fn from(
@@ -36,7 +36,8 @@ impl Image {
             .with_tokenizer(tokenizer)
             .with_prior_tokenizer(prior_tokenizer)
             .build()
-            .await?;
+            .await
+            .map_err(|e| Error::from_std_error(e))?;
         Ok(Self::new(model))
     }
 
@@ -46,16 +47,16 @@ impl Image {
         callback: impl Fn(ImageBuffer<Rgb<u8>, Vec<u8>>) -> (),
     ) -> Result<()> {
         let settings = WuerstchenInferenceSettings::new(prompt);
-        let mut stream = self.model.run(settings)?;
-        block_on(async {
+        let stream = self.model.run(settings);
+        block_on(async move {
+            let mut stream = stream;
             while let Some(img) = stream.next().await {
                 if let Some(buffer) = img.generated_image() {
                     callback(buffer);
                 }
             }
-
-            Ok(())
-        })
+        });
+        Ok(())
     }
 
     pub async fn generate_async(
@@ -64,7 +65,7 @@ impl Image {
         callback: impl Fn(ImageBuffer<Rgb<u8>, Vec<u8>>) -> (),
     ) -> Result<()> {
         let settings = WuerstchenInferenceSettings::new(prompt);
-        let mut stream = self.model.run(settings)?;
+        let mut stream = self.model.run(settings);
 
         while let Some(img) = stream.next().await {
             if let Some(buffer) = img.generated_image() {

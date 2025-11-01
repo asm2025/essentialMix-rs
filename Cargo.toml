@@ -12,13 +12,22 @@ chrono = "0"
 dotenvy = "0"
 humantime = "2"
 image = "0.24.9"
+kalosm = { version = "0", features = ["bert", "llama", "anthropic", "openai", "remote"], optional = true }
+kalosm-language = { version = "0", features = ["bert", "llama", "anthropic", "openai", "remote"], optional = true }
 lazy_static = "1"
 log = "0"
 rand = "0"
-emix = { workspace = true }
+reqwest = { version = "0", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
+futures = "0"
+
+emix = { workspace = true, features = ["full"] }
+emixai = { workspace = true, features = ["full"] }
+emixlog = { workspace = true, features = ["full"] }
+emixnet = { workspace = true, features = ["full"] }
+emixthreading = { workspace = true }
 
 [workspace]
 members = [

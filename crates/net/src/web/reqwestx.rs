@@ -1,4 +1,4 @@
-use ::reqwest::{Client, ClientBuilder, blocking, header};
+use reqwest::{Client, ClientBuilder, blocking, header};
 
 fn build_default_headers() -> header::HeaderMap {
     let mut headers = header::HeaderMap::new();

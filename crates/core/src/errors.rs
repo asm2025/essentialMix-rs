@@ -2,14 +2,17 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Operation is canceled")]
-    Canceled,
-
     #[error("Operation is not supported")]
     NotSupported,
 
     #[error("Not implemented")]
     NotImplemented,
+
+    #[error("Operation is canceled")]
+    Canceled,
+
+    #[error("Operation timed out")]
+    Timeout,
 
     #[error("Item not found. {0}")]
     NotFound(String),
@@ -18,7 +21,16 @@ pub enum Error {
     NoInput,
 
     #[error("Invalid input. {0}")]
-    Invalid(String),
+    InvalidInput(String),
+
+    #[error("Argument error. {0}")]
+    Argument(String),
+
+    #[error("Parse error. {0}")]
+    Parse(String),
+
+    #[error("{0} not found.")]
+    Missing(String),
 
     #[error("Invalid operation. {0}")]
     InvalidOperation(String),
@@ -29,22 +41,13 @@ pub enum Error {
     #[error("Invalid file. {0}")]
     InvalidFile(String),
 
-    #[error("Missing error. {0}")]
-    Missing(String),
-
-    #[error("Argument error. {0}")]
-    Argument(String),
-
-    #[error("Operation timed out")]
-    Timeout,
-
     #[error("Queue already started")]
     QueueStarted,
 
     #[error("Queue already completed")]
     QueueCompleted,
 
-    #[error("Operation timed out")]
+    #[error("Guard was poisoned. {0}")]
     Poisoned(String),
 
     #[error("Session error. {0}")]
@@ -56,7 +59,7 @@ pub enum Error {
     #[error("Network error. {0}")]
     Network(String),
 
-    #[error("Command error {0}. {1}")]
+    #[error("Command error [{0}] {1}")]
     Command(i32, String),
 
     #[error("Limit exceeded. {0}")]
@@ -82,11 +85,19 @@ pub enum Error {
 }
 
 impl Error {
+    /// Create an error from a string. Only used if the error cannot be sent between threads, otherwise use `from_std_error`.
     pub fn from_other_error(message: String) -> Self {
         Error::Other(message)
     }
 
+    /// Create an error from a standard error. This is the preferred way to create an error from an error that can be sent between threads.
     pub fn from_std_error<E: std::error::Error + Send + Sync + 'static>(err: E) -> Self {
         Error::Error(Box::new(err))
+    }
+
+    /// Create an error from a PoisonError, preserving the original error information
+    pub fn from_poison_error<T: std::fmt::Debug>(err: std::sync::PoisonError<T>) -> Self {
+        let guard_info = format!("{:?}", err.get_ref());
+        Error::Poisoned(format!("Guard was poisoned. {}", guard_info))
     }
 }

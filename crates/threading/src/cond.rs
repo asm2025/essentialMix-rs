@@ -1,7 +1,9 @@
 use std::{
-    sync::{Arc, Condvar, LockResult, Mutex, MutexGuard},
+    sync::{Arc, Condvar, Mutex},
     time::{Duration, Instant},
 };
+
+use crate::{Error, Result};
 
 #[derive(Clone, Debug)]
 pub struct Mutcond {
@@ -15,41 +17,121 @@ impl Mutcond {
         }
     }
 
-    pub fn is_signaled<'a>(&'a self) -> LockResult<MutexGuard<'a, bool>> {
+    pub fn is_signaled(&self) -> Result<bool> {
         let (lock, _) = &*self.pair;
-        lock.lock()
+        let guard = match lock.lock() {
+            Ok(g) => g,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
+        Ok(*guard)
     }
 
-    pub fn notify_one(&self) {
+    pub fn notify_one(&self) -> Result<()> {
         let (lock, cvar) = &*self.pair;
-        let mut guard = lock.lock().unwrap();
+        let mut guard = match lock.lock() {
+            Ok(g) => g,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
         *guard = true;
         cvar.notify_one();
+        Ok(())
     }
 
-    pub fn notify_all(&self) {
+    pub fn notify_all(&self) -> Result<()> {
         let (lock, cvar) = &*self.pair;
-        let mut guard = lock.lock().unwrap();
+        let mut guard = match lock.lock() {
+            Ok(g) => g,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
         *guard = true;
         cvar.notify_all();
+        Ok(())
     }
 
-    pub fn wait(&self) -> LockResult<()> {
+    pub fn wait(&self) -> Result<()> {
         let (lock, cvar) = &*self.pair;
-        let mut guard = lock.lock().unwrap();
+        let mut guard = match lock.lock() {
+            Ok(g) => g,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
 
         while !*guard {
-            guard = cvar.wait(guard).unwrap();
+            match cvar.wait(guard) {
+                Ok(g) => guard = g,
+                Err(e) => {
+                    let error_msg = format!("{}", e);
+                    let _poisoned_guard = e.into_inner();
+                    return Err(Error::Poisoned(if error_msg.is_empty() {
+                        "Poison error".to_string()
+                    } else {
+                        error_msg
+                    }));
+                }
+            }
         }
 
         *guard = false;
         Ok(())
     }
 
-    pub fn wait_timeout(&self, timeout: Duration) -> LockResult<bool> {
+    pub fn wait_timeout(&self, timeout: Duration) -> Result<bool> {
         let (lock, cvar) = &*self.pair;
-        let mut guard = lock.lock().unwrap();
-        let (new_guard, result) = cvar.wait_timeout(guard, timeout).unwrap();
+        let mut guard = match lock.lock() {
+            Ok(g) => g,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
+        let (new_guard, result) = match cvar.wait_timeout(guard, timeout) {
+            Ok(tup) => tup,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
         guard = new_guard;
 
         if result.timed_out() {
@@ -60,16 +142,38 @@ impl Mutcond {
         Ok(true)
     }
 
-    pub fn wait_timeout_ms(&self, timeout: u64) -> LockResult<bool> {
+    pub fn wait_timeout_ms(&self, timeout: u64) -> Result<bool> {
         self.wait_timeout(Duration::from_millis(timeout))
     }
 
-    pub fn wait_while(&self, condition: impl Fn() -> bool) -> LockResult<()> {
+    pub fn wait_while(&self, condition: impl Fn() -> bool) -> Result<()> {
         let (lock, cvar) = &*self.pair;
-        let mut guard = lock.lock().unwrap();
+        let mut guard = match lock.lock() {
+            Ok(g) => g,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
 
         while condition() {
-            guard = cvar.wait(guard).unwrap();
+            match cvar.wait(guard) {
+                Ok(g) => guard = g,
+                Err(e) => {
+                    let error_msg = format!("{}", e);
+                    let _poisoned_guard = e.into_inner();
+                    return Err(Error::Poisoned(if error_msg.is_empty() {
+                        "Poison error".to_string()
+                    } else {
+                        error_msg
+                    }));
+                }
+            }
         }
 
         Ok(())
@@ -79,21 +183,42 @@ impl Mutcond {
         &self,
         condition: impl Fn() -> bool,
         timeout: Duration,
-    ) -> LockResult<bool> {
+    ) -> Result<bool> {
         let (lock, cvar) = &*self.pair;
-        let mut guard = lock.lock().unwrap();
+        let mut guard = match lock.lock() {
+            Ok(g) => g,
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner();
+                return Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }));
+            }
+        };
         let start = Instant::now();
 
         while condition() {
             let remaining = timeout.checked_sub(start.elapsed());
             match remaining {
-                Some(time) => {
-                    let result = cvar.wait_timeout(guard, time).unwrap();
-                    guard = result.0;
-                    if result.1.timed_out() {
-                        return Ok(false);
+                Some(time) => match cvar.wait_timeout(guard, time) {
+                    Ok((g, result)) => {
+                        guard = g;
+                        if result.timed_out() {
+                            return Ok(false);
+                        }
                     }
-                }
+                    Err(e) => {
+                        let error_msg = format!("{}", e);
+                        let _poisoned_guard = e.into_inner();
+                        return Err(Error::Poisoned(if error_msg.is_empty() {
+                            "Poison error".to_string()
+                        } else {
+                            error_msg
+                        }));
+                    }
+                },
                 None => return Ok(false),
             }
         }

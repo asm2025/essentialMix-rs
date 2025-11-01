@@ -187,7 +187,9 @@ impl<T: StaticTaskItem> ProducerConsumer<T> {
 
         self.completed.store(true, Ordering::SeqCst);
         self.set_started(false);
-        self.finished_cond.notify_all();
+        if let Err(_) = self.finished_cond.notify_all() {
+            // Mutex was poisoned - this is a serious error but we'll continue cleanup
+        }
         self.finished_noti.notify_waiters();
         thread::sleep(Duration::ZERO);
     }

@@ -1,9 +1,10 @@
 use lettre::{
     Message, SmtpTransport, Transport,
-    transport::smtp::{authentication::Credentials, response::Response},
+    transport::smtp::authentication::Credentials,
 };
 
 use crate::Result;
+use emix::Error;
 
 #[derive(Clone)]
 pub struct Mailer {
@@ -13,7 +14,8 @@ pub struct Mailer {
 impl Mailer {
     pub fn new(host: &str, username: &str, password: &str) -> Result<Self> {
         Ok(Self {
-            smtp: SmtpTransport::relay(host)?
+            smtp: SmtpTransport::relay(host)
+                .map_err(|e| Error::from_std_error(e))?
                 .credentials(Credentials::new(username.to_owned(), password.to_owned()))
                 .build(),
         })
@@ -23,12 +25,15 @@ impl Mailer {
         Mailer { smtp }
     }
 
-    pub fn send(&self, from: &str, to: &str, subject: &str, body: &str) -> Result<Response> {
+    pub fn send(&self, from: &str, to: &str, subject: &str, body: &str) -> Result<()> {
         let email = Message::builder()
-            .from(from.parse()?)
-            .to(to.parse()?)
+            .from(from.parse().map_err(|e| Error::from_std_error(e))?)
+            .to(to.parse().map_err(|e| Error::from_std_error(e))?)
             .subject(subject)
-            .body(body.to_string())?;
-        self.smtp.send(&email)?
+            .body(body.to_string())
+            .map_err(|e| Error::from_std_error(e))?;
+        self.smtp.send(&email)
+            .map_err(|e| Error::from_std_error(e))?;
+        Ok(())
     }
 }

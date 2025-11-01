@@ -3,10 +3,8 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::process::{Command, Stdio};
 
-use crate::{Result, error::*, string::*};
-
-static RGX_LOCATION_CLEAN: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"[\s\t]{2,}").expect("Failed to compile regex"));
+use crate::Result;
+use emix::Error;
 
 #[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ExpressVPNStatus {
@@ -28,22 +26,28 @@ impl ExpressVPN {
             .arg("--version")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)?;
-        let (_, n) = text
-            .find_first(|c| c.is_digit(10))
-            .ok_or(InvalidCommandResponseError)?;
+        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?;
+        let n = text
+            .chars()
+            .enumerate()
+            .find(|(_, c)| c.is_ascii_digit())
+            .map(|(i, _)| i)
+            .ok_or_else(|| Error::Parse("Unable to find version number in output".to_string()))?;
         let text = text[n..].trim().to_string();
         Ok(text)
     }
@@ -53,19 +57,22 @@ impl ExpressVPN {
             .arg("status")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)?.trim().to_string();
+        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?.trim().to_string();
 
         if text.contains("Not Activated") {
             return Ok(ExpressVPNStatus::NotActivated);
@@ -89,7 +96,7 @@ impl ExpressVPN {
             return Ok(ExpressVPNStatus::Error(text));
         }
 
-        Err(UnknownVPNResponseError(text).into())
+        Err(Error::Session(format!("Unknown VPN response: {}", text)))
     }
 
     pub fn connect(&self) -> Result<ExpressVPNStatus> {
@@ -123,15 +130,17 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)?.trim().to_string();
+        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?.trim().to_string();
         match text.find("Connected to") {
             Some(n) => {
                 let l = text[n..].find('\n').unwrap_or(text.len());
@@ -140,14 +149,14 @@ impl ExpressVPN {
             }
             None => {
                 if text.contains("Canceled") {
-                    return Err(CanceledError.into());
+                    return Err(Error::Canceled);
                 }
 
                 if text.contains("unexpectedly") {
-                    return Err(VPNError(text).into());
+                    return Err(Error::Network(text));
                 }
 
-                Err(UnknownVPNResponseError(text).into())
+                Err(Error::Session(format!("Unknown VPN response: {}", text)))
             }
         }
     }
@@ -157,31 +166,33 @@ impl ExpressVPN {
             .arg("disconnect")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            let msg = String::from_utf8(output.stderr)?;
+            let msg = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
 
             if msg.contains("Disconnected") {
                 return Ok(ExpressVPNStatus::Disconnected);
             }
 
-            return Err(CommandError(ret, msg).into());
+            return Err(Error::Command(ret, msg));
         }
 
-        let text = String::from_utf8(output.stdout)?.trim().to_string();
+        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?.trim().to_string();
 
         if text.contains("Disconnected") {
             return Ok(ExpressVPNStatus::Disconnected);
         }
 
-        Err(UnknownVPNResponseError(text).into())
+        Err(Error::Session(format!("Unknown VPN response: {}", text)))
     }
 
     pub fn recent(&self) -> Result<Vec<String>> {
@@ -190,19 +201,23 @@ impl ExpressVPN {
             .arg("recent")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)?;
+        let text = String::from_utf8(output.stdout)
+            .map_err(|e| Error::from_std_error(e))?;
         Ok(self.locations_from_string(&text))
     }
 
@@ -212,19 +227,23 @@ impl ExpressVPN {
             .arg("recommended")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)?;
+        let text = String::from_utf8(output.stdout)
+            .map_err(|e| Error::from_std_error(e))?;
         Ok(self.locations_from_string(&text))
     }
 
@@ -234,19 +253,23 @@ impl ExpressVPN {
             .arg("all")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)?;
+        let text = String::from_utf8(output.stdout)
+            .map_err(|e| Error::from_std_error(e))?;
         Ok(self.locations_from_string(&text))
     }
 
@@ -274,16 +297,19 @@ impl ExpressVPN {
         let output = Command::new(Self::CMD)
             .arg("refresh")
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
         Ok(())
@@ -296,16 +322,19 @@ impl ExpressVPN {
             .arg("network_lock")
             .arg(if enable { "on" } else { "off" })
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
         Ok(())
@@ -318,16 +347,19 @@ impl ExpressVPN {
             .arg("block_trackers")
             .arg(if enable { "true" } else { "false" })
             .stderr(Stdio::piped())
-            .execute_output()?;
+            .execute_output()
+            .map_err(|e| Error::from_std_error(e))?;
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                return Err(CommandError(-1, String::from_utf8(output.stderr)?).into());
+                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                return Err(Error::Command(-1, stderr));
             }
         };
 
         if ret != 0 {
-            return Err(CommandError(ret, String::from_utf8(output.stderr)?).into());
+            let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+            return Err(Error::Command(ret, stderr));
         }
 
         Ok(())

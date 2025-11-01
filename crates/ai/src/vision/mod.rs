@@ -1,2 +1,2 @@
-mod image;
-pub use image::*;
+// Vision module - re-export imaging functionality
+pub use crate::imaging::*;

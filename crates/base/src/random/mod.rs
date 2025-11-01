@@ -10,7 +10,7 @@ pub mod lorem;
 pub mod person;
 
 use fake::{Fake, faker::boolean::raw as f_boolean, locales, uuid};
-use rand::{Rng, distr::uniform::SampleUniform, rngs::StdRng};
+use rand::{Rng, distr::uniform::SampleUniform};
 use std::ops::Range;
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -23,12 +23,11 @@ pub enum UuidVersion {
 }
 
 pub fn alphanum() -> char {
-    let mut rng = StdRng::from_entropy();
-    let num = rng.gen_range(0..62);
+    let num = rand::rng().random_range(0..62);
     match num {
-        0..=9 => char::from_u32(num as u32 + 48).ok_or('0'), // ASCII values for 0-9
-        10..=35 => char::from_u32(num as u32 + 55).ok_or('A'), // ASCII values for A-Z
-        _ => char::from_u32(num as u32 + 61).ok_or('a'),     // ASCII values for a-z
+        0..=9 => char::from_u32(num as u32 + 48).unwrap_or('0'),
+        10..=35 => char::from_u32(num as u32 + 55).unwrap_or('A'),
+        _ => char::from_u32(num as u32 + 61).unwrap_or('a'),
     }
 }
 
@@ -47,13 +46,12 @@ pub fn alphanum_str(len: usize) -> String {
 }
 
 pub fn char() -> char {
-    let mut rng = StdRng::from_entropy();
-    let num = rng.gen_range(0..94);
+    let num = rand::rng().random_range(0..94);
     match num {
-        0..=9 => char::from_u32(num as u32 + 48).ok_or('0'), // ASCII values for 0-9
-        10..=35 => char::from_u32(num as u32 + 55).ok_or('A'), // ASCII values for A-Z
-        36..=61 => char::from_u32(num as u32 + 61).ok_or('a'), // ASCII values for a-z
-        _ => char::from_u32(num as u32 + 33).ok_or('!'),     // ASCII values for special characters
+        0..=9 => char::from_u32(num as u32 + 48).unwrap_or('0'), // ASCII values for 0-9
+        10..=35 => char::from_u32(num as u32 + 55).unwrap_or('A'), // ASCII values for A-Z
+        36..=61 => char::from_u32(num as u32 + 61).unwrap_or('a'), // ASCII values for a-z
+        _ => char::from_u32(num as u32 + 33).unwrap_or('!'), // ASCII values for special characters
     }
 }
 
@@ -76,13 +74,11 @@ pub fn boolean() -> bool {
 }
 
 pub fn float() -> f64 {
-    let mut rng = StdRng::from_entropy();
-    rng.gen_range(0.0..1.0)
+    rand::rng().random_range(0.0..1.0)
 }
 
 pub fn numeric<T: SampleUniform + PartialOrd>(r: Range<T>) -> T {
-    let mut rng = StdRng::from_entropy();
-    rng.gen_range(r)
+    rand::rng().random_range(r)
 }
 
 pub fn uuid() -> String {

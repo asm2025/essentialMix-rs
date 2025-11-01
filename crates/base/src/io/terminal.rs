@@ -11,7 +11,7 @@ use std::{
 };
 use tokio::sync::mpsc::{self, error::TryRecvError};
 
-use crate::{Result, error::emError};
+use crate::{Error, Result};
 
 #[derive(Debug)]
 pub struct KeyListener {
@@ -92,7 +92,7 @@ pub fn display_menu(items: &[&str], prompt: Option<&str>) -> Result<usize> {
         .items(items)
         .default(0)
         .interact()
-        .map_err(|e| emError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(Error::from_std_error)?;
     Ok(if selection == items.len() - 1 {
         0
     } else {
@@ -118,7 +118,7 @@ pub fn get_str(prompt: Option<&str>) -> Result<String> {
     let input = get(prompt)?;
 
     if input.is_empty() {
-        return Err(emError::NoInput);
+        return Err(Error::NoInput);
     }
 
     Ok(input)
@@ -133,7 +133,7 @@ pub fn get_char(prompt: Option<&str>) -> Result<char> {
         if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
             match code {
                 KeyCode::Char(c) => break Ok(c),
-                KeyCode::Esc | KeyCode::Enter => break Err(emError::NoInput),
+                KeyCode::Esc | KeyCode::Enter => break Err(Error::NoInput),
                 _ => continue,
             }
         }
@@ -150,12 +150,9 @@ where
     T::Err: std::error::Error + 'static,
 {
     let input = get_str(prompt)?;
-    let n = input.parse::<T>().map_err(|e| {
-        emError::Io(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            e.to_string(),
-        ))
-    })?;
+    let n = input
+        .parse::<T>()
+        .map_err(|e| Error::Parse(e.to_string()))?;
     Ok(n)
 }
 
@@ -170,7 +167,7 @@ pub fn get_password_str(prompt: Option<&str>) -> Result<String> {
     let input = get_password(prompt)?;
 
     if input.is_empty() {
-        return Err(emError::NoInput);
+        return Err(Error::NoInput);
     }
 
     Ok(input)
@@ -181,7 +178,7 @@ pub fn confirm(prompt: Option<&str>) -> Result<bool> {
 
     match input {
         'y' | 'Y' => Ok(true),
-        _ => Err(emError::NoInput),
+        _ => Err(Error::NoInput),
     }
 }
 

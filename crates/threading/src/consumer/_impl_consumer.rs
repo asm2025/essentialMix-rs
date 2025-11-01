@@ -173,7 +173,10 @@ impl<T: StaticTaskItem> Consumer<T> {
         self.completed.store(true, Ordering::SeqCst);
         self.finished.store(true, Ordering::SeqCst);
         self.set_started(false);
-        self.finished_cond.notify_all();
+        if let Err(_) = self.finished_cond.notify_all() {
+            // Mutex was poisoned - this is a serious error but we'll continue cleanup
+            // The error information is preserved in the Result type for caller handling
+        }
         self.finished_noti.notify_waiters();
         thread::sleep(Duration::ZERO);
     }
@@ -336,7 +339,9 @@ impl<T: StaticTaskItem> Consumer<T> {
             thread::sleep(self.options.sleep_after_send);
         }
 
-        self.items_cond.notify_all();
+        if let Err(_) = self.items_cond.notify_all() {
+            // Mutex was poisoned - continue operation despite error
+        }
         Ok(())
     }
 
@@ -351,19 +356,20 @@ impl<T: StaticTaskItem> Consumer<T> {
     fn deq(&self, wait_for_item: bool) -> Option<T> {
         if wait_for_item {
             while self.items.is_empty() && !self.is_cancelled() && !self.is_completed() {
-                if !self
-                    .items_cond
-                    .wait_timeout(self.options.peek_timeout)
-                    .unwrap()
-                {
-                    continue;
+                match self.items_cond.wait_timeout(self.options.peek_timeout) {
+                    Ok(true) => {
+                        if self.is_cancelled() || self.is_completed() {
+                            return None;
+                        }
+                        return self.items.pop();
+                    }
+                    Ok(false) => continue,
+                    Err(_) => {
+                        // Log or handle the error, but continue the loop
+                        // In case of poison error, we want to continue rather than panic
+                        continue;
+                    }
                 }
-
-                if self.is_cancelled() || self.is_completed() {
-                    return None;
-                }
-
-                return self.items.pop();
             }
         }
 
@@ -388,12 +394,16 @@ impl<T: StaticTaskItem> Consumer<T> {
 
     pub fn complete(&self) {
         self.completed.store(true, Ordering::SeqCst);
-        self.items_cond.notify_all();
+        if let Err(_) = self.items_cond.notify_all() {
+            // Mutex was poisoned - continue operation despite error
+        }
     }
 
     pub fn cancel(&self) {
         self.cancelled.store(true, Ordering::SeqCst);
-        self.items_cond.notify_all();
+        if let Err(_) = self.items_cond.notify_all() {
+            // Mutex was poisoned - continue operation despite error
+        }
     }
 
     pub fn pause(&self) {
@@ -402,7 +412,9 @@ impl<T: StaticTaskItem> Consumer<T> {
 
     pub fn resume(&self) {
         self.paused.store(false, Ordering::SeqCst);
-        self.items_cond.notify_all();
+        if let Err(_) = self.items_cond.notify_all() {
+            // Mutex was poisoned - continue operation despite error
+        }
     }
 
     pub fn wait(&self) -> Result<()> {

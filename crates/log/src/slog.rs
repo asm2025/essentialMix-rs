@@ -1,13 +1,13 @@
 use chrono::Local;
-use file_rotate::{compression::Compression, suffix::AppendCount, ContentLimit, FileRotate};
+use file_rotate::{ContentLimit, FileRotate, compression::Compression, suffix::AppendCount};
 use slog::*;
 use slog_async::*;
 use slog_json::Json;
 use slog_scope::GlobalLoggerGuard;
 use slog_term::{Decorator, PlainSyncDecorator};
-use std::{io, path::Path};
+use std::{fs::OpenOptions, io, path::Path};
 
-use crate::{LogLevel, Result as CommonResult, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN};
+use crate::{Error, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN, LogLevel, Result as CommonResult};
 
 impl From<LogLevel> for slog::Level {
     fn from(level: LogLevel) -> slog::Level {
@@ -55,18 +55,36 @@ pub fn build_with<T: AsRef<Path>>(
 ) -> CommonResult<GlobalLoggerGuard> {
     let decorator = PlainSyncDecorator::new(io::stdout());
     let drain = CustomDecorator::new(decorator);
-    let logger = FileRotate::new(
-        file_name,
-        AppendCount::new(6),
-        ContentLimit::Bytes(
-            limit
-                .unwrap_or(LOG_SIZE_MAX)
-                .clamp(LOG_SIZE_MIN, LOG_SIZE_MAX),
-        ),
-        Compression::None,
+    let logger = {
         #[cfg(unix)]
-        None,
-    );
+        {
+            FileRotate::new(
+                file_name,
+                AppendCount::new(6),
+                ContentLimit::Bytes(
+                    limit
+                        .unwrap_or(LOG_SIZE_MAX)
+                        .clamp(LOG_SIZE_MIN, LOG_SIZE_MAX),
+                ),
+                Compression::None,
+                None::<u32>,
+            )
+        }
+        #[cfg(not(unix))]
+        {
+            FileRotate::new(
+                file_name,
+                AppendCount::new(6),
+                ContentLimit::Bytes(
+                    limit
+                        .unwrap_or(LOG_SIZE_MAX)
+                        .clamp(LOG_SIZE_MIN, LOG_SIZE_MAX),
+                ),
+                Compression::None,
+                None::<OpenOptions>,
+            )
+        }
+    };
     let file_drain = Drain::fuse(
         Json::new(logger)
             .add_key_value(o!("timestamp" => FnValue(|_| {
@@ -99,6 +117,6 @@ pub fn build_with<T: AsRef<Path>>(
     );
     let logger = Logger::root(drain, o!());
     let guard = slog_scope::set_global_logger(logger);
-    slog_stdlog::init()?;
+    slog_stdlog::init().map_err(|e| Error::from_std_error(e))?;
     Ok(guard)
 }
