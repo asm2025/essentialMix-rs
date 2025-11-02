@@ -7,7 +7,7 @@ use slog_scope::GlobalLoggerGuard;
 use slog_term::{Decorator, PlainSyncDecorator};
 use std::{fs::OpenOptions, io, path::Path};
 
-use crate::{Error, LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN, LogLevel, Result as CommonResult};
+use crate::{LOG_DATE_FORMAT, LOG_SIZE_MAX, LOG_SIZE_MIN, LogLevel, Result as CommonResult};
 
 impl From<LogLevel> for slog::Level {
     fn from(level: LogLevel) -> slog::Level {
@@ -117,6 +117,7 @@ pub fn build_with<T: AsRef<Path>>(
     );
     let logger = Logger::root(drain, o!());
     let guard = slog_scope::set_global_logger(logger);
-    slog_stdlog::init().map_err(|e| Error::from_std_error(e))?;
+    // slog_stdlog::init() may fail if already initialized, which is ok for tests
+    let _ = slog_stdlog::init();
     Ok(guard)
 }

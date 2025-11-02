@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use emix::{Error, Result};
+    use emixcore::{Error, Result};
     use emixnet::web::*;
     use serde::Serialize;
     use serde_json::Value;
@@ -47,11 +47,15 @@ mod tests {
             "URL should contain path"
         );
 
-        // Test relative URL
+        // Test relative URL - gets converted to absolute URL with localhost
         let url = "/path/to/relative/url".as_url()?;
         assert!(
-            url.as_str().starts_with("/"),
-            "Relative URL should start with /"
+            url.as_str().contains("/path/to/relative/url"),
+            "Relative URL should contain the path"
+        );
+        assert!(
+            url.as_str().starts_with("https://"),
+            "Relative URL should be converted to absolute"
         );
 
         Ok(())
@@ -163,3 +167,4 @@ mod tests {
         Ok(())
     }
 }
+

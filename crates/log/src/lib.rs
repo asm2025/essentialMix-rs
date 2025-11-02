@@ -1,7 +1,7 @@
 #[cfg(feature = "log4rs")]
-pub mod log4rs;
+pub mod log4rsx;
 #[cfg(feature = "slog")]
-pub mod slog;
+pub mod slogx;
 
 pub use emixcore::*;
 

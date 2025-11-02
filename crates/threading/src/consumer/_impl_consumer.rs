@@ -67,10 +67,10 @@ impl ConsumerOptions {
 pub struct Consumer<T: StaticTaskItem> {
     pub options: ConsumerOptions,
     items: Arc<SegQueue<T>>,
-    items_cond: Arc<Mutcond>,
+    items_cond: Arc<ManualResetCond>,
     started: Arc<Mutex<bool>>,
     finished: Arc<AtomicBool>,
-    finished_cond: Arc<Mutcond>,
+    finished_cond: Arc<ManualResetCond>,
     finished_noti: Arc<Notify>,
     completed: Arc<AtomicBool>,
     paused: Arc<AtomicBool>,
@@ -84,10 +84,10 @@ impl<T: StaticTaskItem> Consumer<T> {
         Consumer {
             options: Default::default(),
             items: Arc::new(SegQueue::new()),
-            items_cond: Arc::new(Mutcond::new()),
+            items_cond: Arc::new(ManualResetCond::new_unset()),
             started: Arc::new(Mutex::new(false)),
             finished: Arc::new(AtomicBool::new(false)),
-            finished_cond: Arc::new(Mutcond::new()),
+            finished_cond: Arc::new(ManualResetCond::new_unset()),
             finished_noti: Arc::new(Notify::new()),
             completed: Arc::new(AtomicBool::new(false)),
             paused: Arc::new(AtomicBool::new(false)),
@@ -101,10 +101,10 @@ impl<T: StaticTaskItem> Consumer<T> {
         Consumer {
             options,
             items: Arc::new(SegQueue::new()),
-            items_cond: Arc::new(Mutcond::new()),
+            items_cond: Arc::new(ManualResetCond::new_unset()),
             started: Arc::new(Mutex::new(false)),
             finished: Arc::new(AtomicBool::new(false)),
-            finished_cond: Arc::new(Mutcond::new()),
+            finished_cond: Arc::new(ManualResetCond::new_unset()),
             finished_noti: Arc::new(Notify::new()),
             completed: Arc::new(AtomicBool::new(false)),
             paused: Arc::new(AtomicBool::new(false)),
@@ -120,6 +120,11 @@ impl<T: StaticTaskItem> Consumer<T> {
 
     fn set_started(&self, value: bool) -> bool {
         let mut started = self.started.lock().unwrap();
+
+        if *started && value {
+            return false;
+        }
+
         *started = value;
         true
     }
@@ -173,7 +178,7 @@ impl<T: StaticTaskItem> Consumer<T> {
         self.completed.store(true, Ordering::SeqCst);
         self.finished.store(true, Ordering::SeqCst);
         self.set_started(false);
-        if let Err(_) = self.finished_cond.notify_all() {
+        if let Err(_) = self.finished_cond.set() {
             // Mutex was poisoned - this is a serious error but we'll continue cleanup
             // The error information is preserved in the Result type for caller handling
         }
@@ -339,7 +344,7 @@ impl<T: StaticTaskItem> Consumer<T> {
             thread::sleep(self.options.sleep_after_send);
         }
 
-        if let Err(_) = self.items_cond.notify_all() {
+        if let Err(_) = self.items_cond.set() {
             // Mutex was poisoned - continue operation despite error
         }
         Ok(())
@@ -394,14 +399,14 @@ impl<T: StaticTaskItem> Consumer<T> {
 
     pub fn complete(&self) {
         self.completed.store(true, Ordering::SeqCst);
-        if let Err(_) = self.items_cond.notify_all() {
+        if let Err(_) = self.items_cond.set() {
             // Mutex was poisoned - continue operation despite error
         }
     }
 
     pub fn cancel(&self) {
         self.cancelled.store(true, Ordering::SeqCst);
-        if let Err(_) = self.items_cond.notify_all() {
+        if let Err(_) = self.items_cond.set() {
             // Mutex was poisoned - continue operation despite error
         }
     }
@@ -412,7 +417,7 @@ impl<T: StaticTaskItem> Consumer<T> {
 
     pub fn resume(&self) {
         self.paused.store(false, Ordering::SeqCst);
-        if let Err(_) = self.items_cond.notify_all() {
+        if let Err(_) = self.items_cond.set() {
             // Mutex was poisoned - continue operation despite error
         }
     }

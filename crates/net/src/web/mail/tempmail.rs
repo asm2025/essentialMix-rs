@@ -47,7 +47,7 @@ struct NewNameLength {
     max: usize,
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SecMailDomain {
     #[default]
     SecMailCom,
@@ -83,7 +83,7 @@ impl Display for SecMailDomain {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TempMailProvider {
     #[default]
     Tempmail,
@@ -107,7 +107,7 @@ struct SecMailMessage {
     date: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TempMail {
     provider: TempMailProvider,
     username: String,

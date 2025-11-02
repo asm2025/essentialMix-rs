@@ -28,6 +28,9 @@ full = ["log4rs", "slog"]
 log4rs = ["dep:file-rotate", "dep:log4rs"]
 slog = ["dep:file-rotate", "dep:slog", "dep:slog-async", "dep:slog-json", "dep:slog-scope", "dep:slog-stdlog", "dep:slog-term"]
 
+[dev-dependencies]
+emix = { workspace = true, features = ["fake"] }
+
 [package.metadata.scripts]
 run = "cargo run"
 check = "cargo check"

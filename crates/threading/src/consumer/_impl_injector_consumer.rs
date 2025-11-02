@@ -77,7 +77,7 @@ pub struct InjectorWorker<T: StaticTaskItem> {
     len: Arc<AtomicUsize>,
     started: Arc<Mutex<bool>>,
     finished: Arc<AtomicBool>,
-    finished_cond: Arc<Mutcond>,
+    finished_cond: Arc<ManualResetCond>,
     finished_noti: Arc<Notify>,
     completed: Arc<AtomicBool>,
     paused: Arc<AtomicBool>,
@@ -95,7 +95,7 @@ impl<T: StaticTaskItem> InjectorWorker<T> {
             len: Arc::new(AtomicUsize::new(0)),
             started: Arc::new(Mutex::new(false)),
             finished: Arc::new(AtomicBool::new(false)),
-            finished_cond: Arc::new(Mutcond::new()),
+            finished_cond: Arc::new(ManualResetCond::new_unset()),
             finished_noti: Arc::new(Notify::new()),
             completed: Arc::new(AtomicBool::new(false)),
             paused: Arc::new(AtomicBool::new(false)),
@@ -113,7 +113,7 @@ impl<T: StaticTaskItem> InjectorWorker<T> {
             len: Arc::new(AtomicUsize::new(0)),
             started: Arc::new(Mutex::new(false)),
             finished: Arc::new(AtomicBool::new(false)),
-            finished_cond: Arc::new(Mutcond::new()),
+            finished_cond: Arc::new(ManualResetCond::new_unset()),
             finished_noti: Arc::new(Notify::new()),
             completed: Arc::new(AtomicBool::new(false)),
             paused: Arc::new(AtomicBool::new(false)),
@@ -187,7 +187,7 @@ impl<T: StaticTaskItem> InjectorWorker<T> {
         self.completed.store(true, Ordering::SeqCst);
         self.finished.store(true, Ordering::SeqCst);
         self.set_started(false);
-        if let Err(_) = self.finished_cond.notify_all() {
+        if let Err(_) = self.finished_cond.set() {
             // Mutex was poisoned - this is a serious error but we'll continue cleanup
         }
         self.finished_noti.notify_waiters();

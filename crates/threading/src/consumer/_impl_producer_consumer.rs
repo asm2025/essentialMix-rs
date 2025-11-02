@@ -75,7 +75,7 @@ pub struct ProducerConsumer<T: StaticTaskItem> {
     pub options: ProducerConsumerOptions,
     started: Arc<Mutex<bool>>,
     finished: Arc<AtomicBool>,
-    finished_cond: Arc<Mutcond>,
+    finished_cond: Arc<ManualResetCond>,
     finished_noti: Arc<Notify>,
     completed: Arc<AtomicBool>,
     paused: Arc<AtomicBool>,
@@ -96,7 +96,7 @@ impl<T: StaticTaskItem> ProducerConsumer<T> {
             receiver,
             started: Arc::new(Mutex::new(false)),
             finished: Arc::new(AtomicBool::new(false)),
-            finished_cond: Arc::new(Mutcond::new()),
+            finished_cond: Arc::new(ManualResetCond::new_unset()),
             finished_noti: Arc::new(Notify::new()),
             completed: Arc::new(AtomicBool::new(false)),
             paused: Arc::new(AtomicBool::new(false)),
@@ -114,7 +114,7 @@ impl<T: StaticTaskItem> ProducerConsumer<T> {
             receiver,
             started: Arc::new(Mutex::new(false)),
             finished: Arc::new(AtomicBool::new(false)),
-            finished_cond: Arc::new(Mutcond::new()),
+            finished_cond: Arc::new(ManualResetCond::new_unset()),
             finished_noti: Arc::new(Notify::new()),
             completed: Arc::new(AtomicBool::new(false)),
             paused: Arc::new(AtomicBool::new(false)),
@@ -186,9 +186,11 @@ impl<T: StaticTaskItem> ProducerConsumer<T> {
         }
 
         self.completed.store(true, Ordering::SeqCst);
+        self.finished.store(true, Ordering::SeqCst);
         self.set_started(false);
-        if let Err(_) = self.finished_cond.notify_all() {
+        if let Err(_) = self.finished_cond.set() {
             // Mutex was poisoned - this is a serious error but we'll continue cleanup
+            // The error information is preserved in the Result type for caller handling
         }
         self.finished_noti.notify_waiters();
         thread::sleep(Duration::ZERO);
@@ -277,7 +279,7 @@ impl<T: StaticTaskItem> ProducerConsumer<T> {
                 }
 
                 loop {
-                    if this.is_cancelled() || (this.is_busy() && this.is_completed()) {
+                    if this.is_cancelled() || (!this.is_busy() && this.is_completed()) {
                         break;
                     }
 

@@ -1,7 +1,7 @@
 pub trait StringEx {
-    fn trim(&self, ch: &char) -> &str;
-    fn trim_start(&self, ch: &char) -> &str;
-    fn trim_end(&self, ch: &char) -> &str;
+    fn trim_char(&self, ch: &char) -> &str;
+    fn trim_start_char(&self, ch: &char) -> &str;
+    fn trim_end_char(&self, ch: &char) -> &str;
     fn trim_many(&self, ch: &[char]) -> &str;
     fn trim_start_many(&self, ch: &[char]) -> &str;
     fn trim_end_many(&self, ch: &[char]) -> &str;
@@ -12,7 +12,7 @@ pub trait StringEx {
 }
 
 impl StringEx for str {
-    fn trim(&self, ch: &char) -> &str {
+    fn trim_char(&self, ch: &char) -> &str {
         if self.is_empty() {
             return self;
         }
@@ -37,7 +37,7 @@ impl StringEx for str {
         &self[start..end]
     }
 
-    fn trim_start(&self, ch: &char) -> &str {
+    fn trim_start_char(&self, ch: &char) -> &str {
         if self.is_empty() {
             return self;
         }
@@ -54,7 +54,7 @@ impl StringEx for str {
         &self[start..]
     }
 
-    fn trim_end(&self, ch: &char) -> &str {
+    fn trim_end_char(&self, ch: &char) -> &str {
         if self.is_empty() {
             return self;
         }
@@ -167,7 +167,7 @@ impl StringEx for str {
 
         for (i, c) in self.chars().rev().enumerate() {
             if predicate(c) {
-                return Some((c, self.len() - i));
+                return Some((c, self.len() - 1 - i));
             }
         }
 

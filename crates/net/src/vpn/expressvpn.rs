@@ -1,12 +1,10 @@
 use execute::Execute;
-use once_cell::sync::Lazy;
-use regex::Regex;
 use std::process::{Command, Stdio};
 
 use crate::Result;
 use emix::Error;
 
-#[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ExpressVPNStatus {
     #[default]
     Unknown,

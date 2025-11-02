@@ -96,8 +96,29 @@ impl Error {
     }
 
     /// Create an error from a PoisonError, preserving the original error information
+    /// and reclaiming the poisoned guard.
     pub fn from_poison_error<T: std::fmt::Debug>(err: std::sync::PoisonError<T>) -> Self {
         let guard_info = format!("{:?}", err.get_ref());
+        let _poisoned_guard = err.into_inner(); // Reclaim the guard
         Error::Poisoned(format!("Guard was poisoned. {}", guard_info))
+    }
+
+    /// Helper function to handle poisoned mutex errors.
+    /// Reclaims the poisoned guard and converts the error to an Error::Poisoned variant.
+    pub fn handle_poison_error<T, E: std::fmt::Debug>(
+        result: std::result::Result<T, std::sync::PoisonError<E>>,
+    ) -> crate::Result<T> {
+        match result {
+            Ok(value) => Ok(value),
+            Err(e) => {
+                let error_msg = format!("{}", e);
+                let _poisoned_guard = e.into_inner(); // Reclaim the guard
+                Err(Error::Poisoned(if error_msg.is_empty() {
+                    "Poison error".to_string()
+                } else {
+                    error_msg
+                }))
+            }
+        }
     }
 }
