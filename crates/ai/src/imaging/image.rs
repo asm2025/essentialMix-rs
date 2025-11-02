@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use crate::{Error, Result};
 
+#[must_use]
 pub struct Image {
     model: Arc<Wuerstchen>,
 }

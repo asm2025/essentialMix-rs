@@ -4,7 +4,7 @@ use futures::StreamExt;
 use kalosm::*;
 use reqwest::Client as ReqwestClient;
 use std::{
-    cmp, fmt,
+    cmp,
     sync::{Arc, Mutex},
 };
 use tokio::sync::mpsc::{Receiver, Sender, channel};
@@ -14,6 +14,7 @@ use super::SourceSize;
 // Note: ModelSource import is commented out until OpenAiSourceModel implementation is completed
 // use super::ModelSource;
 use crate::{Error, Result};
+use std::fmt;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -22,9 +23,13 @@ pub enum OpenAiSource {
     #[default]
     gpt_4o_mini,
     gpt_4o,
+    gpt_4o_2024_08_06,
     gpt_4,
     gpt_4_turbo,
+    gpt_4_turbo_preview,
     o1_mini,
+    o1_preview,
+    o3_mini,
 }
 
 impl fmt::Display for OpenAiSource {
@@ -33,9 +38,13 @@ impl fmt::Display for OpenAiSource {
             OpenAiSource::gpt_3_5_turbo => write!(f, "gpt-3.5-turbo"),
             OpenAiSource::gpt_4o_mini => write!(f, "gpt-4o-mini"),
             OpenAiSource::gpt_4o => write!(f, "gpt-4o"),
+            OpenAiSource::gpt_4o_2024_08_06 => write!(f, "gpt-4o-2024-08-06"),
             OpenAiSource::gpt_4 => write!(f, "gpt-4"),
             OpenAiSource::gpt_4_turbo => write!(f, "gpt-4-turbo"),
+            OpenAiSource::gpt_4_turbo_preview => write!(f, "gpt-4-turbo-preview"),
             OpenAiSource::o1_mini => write!(f, "o1-mini"),
+            OpenAiSource::o1_preview => write!(f, "o1-preview"),
+            OpenAiSource::o3_mini => write!(f, "o3-mini"),
         }
     }
 }
@@ -45,7 +54,7 @@ impl From<SourceSize> for OpenAiSource {
         match size {
             SourceSize::Tiny => OpenAiSource::gpt_4o_mini,
             SourceSize::Small | SourceSize::Base => OpenAiSource::gpt_4o,
-            SourceSize::Medium => OpenAiSource::gpt_4,
+            SourceSize::Medium => OpenAiSource::gpt_4o_2024_08_06,
             SourceSize::Large => OpenAiSource::gpt_4_turbo,
         }
     }
@@ -124,6 +133,7 @@ impl From<SourceSize> for OpenAiSource {
 // }
 
 #[derive(Clone)]
+#[must_use]
 pub struct ChatGpt<C: Config> {
     client: Arc<Client<C>>,
     source: OpenAiSource,

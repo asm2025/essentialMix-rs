@@ -14,6 +14,7 @@ use tokio::sync::mpsc::{self, error::TryRecvError};
 use crate::{Error, Result};
 
 #[derive(Debug)]
+#[must_use]
 pub struct KeyListener {
     rx: mpsc::Receiver<KeyEvent>,
     _handle: thread::JoinHandle<()>,

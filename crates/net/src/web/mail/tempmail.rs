@@ -108,6 +108,7 @@ struct SecMailMessage {
 }
 
 #[derive(Clone, Debug)]
+#[must_use]
 pub struct TempMail {
     provider: TempMailProvider,
     username: String,

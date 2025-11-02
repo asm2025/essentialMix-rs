@@ -1,7 +1,5 @@
-mod llama;
-pub use llama::*;
-mod openai;
-pub use openai::*;
+pub mod llama;
+pub mod openai;
 
 use kalosm::{
     language::{
@@ -114,6 +112,7 @@ To use CUDA on your machine, follow these steps:
 After completing these steps, you should be able to use CUDA on your machine.
 */
 #[derive(Clone)]
+#[must_use]
 pub struct Chat<M: ChatModelType + Send + Sync + 'static> {
     model: Arc<Mutex<M>>,
 }

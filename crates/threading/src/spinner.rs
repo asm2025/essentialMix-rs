@@ -14,6 +14,7 @@ use crate::{Error, Result, constants::*};
 const ERR_FINISHED: &str = "Spinner is already finished. Try resseting it.";
 
 #[derive(Clone)]
+#[must_use]
 pub struct SpinnerOptions {
     pub prefix: Option<String>,
     pub message: Option<String>,
@@ -41,6 +42,7 @@ impl Default for SpinnerOptions {
 }
 
 #[derive(Clone)]
+#[must_use]
 pub struct Spinner {
     pb: ProgressBar,
     is_finished: Arc<AtomicBool>,

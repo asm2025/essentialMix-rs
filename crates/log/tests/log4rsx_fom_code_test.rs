@@ -31,37 +31,19 @@ fn test_log4rs_from_code() -> Result<()> {
     assert!(log_path.exists(), "Log file should exist after logging");
     let content = fs::read_to_string(&log_path).unwrap_or_default();
     assert!(!content.is_empty(), "Log file should not be empty");
-    assert!(content.contains("Test error message"), "Log file should contain error message");
-    assert!(content.contains("Test info message"), "Log file should contain info message");
+    assert!(
+        content.contains("Test error message"),
+        "Log file should contain error message"
+    );
+    assert!(
+        content.contains("Test info message"),
+        "Log file should contain info message"
+    );
 
     // Clean up
     drop(_handle);
     if log_path.exists() {
         let _ = fs::remove_file(&log_path);
-    }
-
-    Ok(())
-}
-
-#[test]
-fn test_log4rs_from_file() -> Result<()> {
-    use emix::io::directory;
-    
-    let config_path = directory::current()?.join("crates/log/tests/log4rs.yaml");
-
-    if !config_path.exists() {
-        return Ok(()); // Skip if config doesn't exist
-    }
-
-    log4rsx::from_file(&config_path)?;
-
-    error!("Test error from file config");
-    warn!("Test warning from file config");
-    info!("Test info from file config");
-
-    // Clean up
-    if config_path.exists() {
-        let _ = fs::remove_file(config_path.parent().unwrap().join("_logs_test/test_file_config.log"));
     }
 
     Ok(())

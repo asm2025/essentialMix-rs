@@ -21,6 +21,7 @@ impl From<SourceSize> for WhisperSource {
 }
 
 #[derive(Clone)]
+#[must_use]
 pub struct Whisper {
     model: Arc<RWhisper>,
 }

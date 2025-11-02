@@ -15,6 +15,7 @@ use tokio::{
 use crate::{constants::*, *};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[must_use]
 pub struct InjectorWorkerOptions {
     pub behavior: QueueBehavior,
     pub threads: usize,
@@ -70,6 +71,7 @@ impl InjectorWorkerOptions {
 }
 
 #[derive(Clone, Debug)]
+#[must_use]
 pub struct InjectorWorker<T: StaticTaskItem> {
     pub options: InjectorWorkerOptions,
     injector: Arc<Injector<T>>,

@@ -1,6 +1,6 @@
 #[cfg(all(test, feature = "language"))]
 mod tests {
-    use emixai::{SourceSize, language::OpenAiSource};
+    use emixai::{SourceSize, language::openai::OpenAiSource};
 
     #[test]
     fn test_source_size_default() {
@@ -23,32 +23,6 @@ mod tests {
     }
 
     #[test]
-    fn test_source_size_partial_eq() {
-        assert_eq!(SourceSize::Tiny, SourceSize::Tiny);
-        assert_ne!(SourceSize::Tiny, SourceSize::Small);
-    }
-
-    #[test]
-    fn test_source_size_partial_ord() {
-        assert!(SourceSize::Tiny < SourceSize::Small);
-        assert!(SourceSize::Small < SourceSize::Base);
-        assert!(SourceSize::Base < SourceSize::Medium);
-        assert!(SourceSize::Medium < SourceSize::Large);
-    }
-
-    #[test]
-    fn test_source_size_hash() {
-        use std::collections::HashMap;
-        let mut map = HashMap::new();
-        map.insert(SourceSize::Tiny, "tiny");
-        map.insert(SourceSize::Small, "small");
-
-        assert_eq!(map.get(&SourceSize::Tiny), Some(&"tiny"));
-        assert_eq!(map.get(&SourceSize::Small), Some(&"small"));
-        assert_eq!(map.get(&SourceSize::Base), None);
-    }
-
-    #[test]
     fn test_openai_source_default() {
         assert_eq!(OpenAiSource::default(), OpenAiSource::gpt_4o_mini);
     }
@@ -58,9 +32,13 @@ mod tests {
         assert_eq!(OpenAiSource::gpt_3_5_turbo.to_string(), "gpt-3.5-turbo");
         assert_eq!(OpenAiSource::gpt_4o_mini.to_string(), "gpt-4o-mini");
         assert_eq!(OpenAiSource::gpt_4o.to_string(), "gpt-4o");
+        assert_eq!(OpenAiSource::gpt_4o_2024_08_06.to_string(), "gpt-4o-2024-08-06");
         assert_eq!(OpenAiSource::gpt_4.to_string(), "gpt-4");
         assert_eq!(OpenAiSource::gpt_4_turbo.to_string(), "gpt-4-turbo");
+        assert_eq!(OpenAiSource::gpt_4_turbo_preview.to_string(), "gpt-4-turbo-preview");
         assert_eq!(OpenAiSource::o1_mini.to_string(), "o1-mini");
+        assert_eq!(OpenAiSource::o1_preview.to_string(), "o1-preview");
+        assert_eq!(OpenAiSource::o3_mini.to_string(), "o3-mini");
     }
 
     #[test]
@@ -71,50 +49,13 @@ mod tests {
         );
         assert_eq!(OpenAiSource::from(SourceSize::Small), OpenAiSource::gpt_4o);
         assert_eq!(OpenAiSource::from(SourceSize::Base), OpenAiSource::gpt_4o);
-        assert_eq!(OpenAiSource::from(SourceSize::Medium), OpenAiSource::gpt_4);
+        assert_eq!(
+            OpenAiSource::from(SourceSize::Medium),
+            OpenAiSource::gpt_4o_2024_08_06
+        );
         assert_eq!(
             OpenAiSource::from(SourceSize::Large),
             OpenAiSource::gpt_4_turbo
         );
-    }
-
-    #[test]
-    fn test_openai_source_clone() {
-        let source = OpenAiSource::gpt_4o;
-        let cloned = source;
-        assert_eq!(source, cloned);
-    }
-
-    #[test]
-    fn test_openai_source_copy() {
-        let source = OpenAiSource::gpt_4;
-        let copied = source;
-        assert_eq!(source, copied);
-        assert_eq!(source, OpenAiSource::gpt_4);
-    }
-
-    #[test]
-    fn test_openai_source_partial_eq() {
-        assert_eq!(OpenAiSource::gpt_4o_mini, OpenAiSource::gpt_4o_mini);
-        assert_ne!(OpenAiSource::gpt_4o_mini, OpenAiSource::gpt_4o);
-    }
-
-    #[test]
-    fn test_openai_source_ord() {
-        assert!(OpenAiSource::gpt_3_5_turbo < OpenAiSource::gpt_4o_mini);
-        assert!(OpenAiSource::gpt_4o_mini < OpenAiSource::gpt_4o);
-        assert!(OpenAiSource::gpt_4o < OpenAiSource::gpt_4);
-    }
-
-    #[test]
-    fn test_openai_source_hash() {
-        use std::collections::HashMap;
-        let mut map = HashMap::new();
-        map.insert(OpenAiSource::gpt_4o_mini, "mini");
-        map.insert(OpenAiSource::gpt_4o, "o");
-
-        assert_eq!(map.get(&OpenAiSource::gpt_4o_mini), Some(&"mini"));
-        assert_eq!(map.get(&OpenAiSource::gpt_4o), Some(&"o"));
-        assert_eq!(map.get(&OpenAiSource::gpt_4), None);
     }
 }

@@ -14,6 +14,7 @@ use tokio::{
 use crate::{constants::*, *};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[must_use]
 pub struct ProducerConsumerOptions {
     pub capacity: usize,
     pub threads: usize,
@@ -71,6 +72,7 @@ impl ProducerConsumerOptions {
 }
 
 #[derive(Clone, Debug)]
+#[must_use]
 pub struct ProducerConsumer<T: StaticTaskItem> {
     pub options: ProducerConsumerOptions,
     started: Arc<Mutex<bool>>,

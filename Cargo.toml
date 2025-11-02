@@ -67,9 +67,3 @@ codegen-units = 1
 [profile.dev.package."*"]
 opt-level = 3
 
-[package.metadata.scripts]
-run = "cargo run"
-check = "cargo check"
-build = "cargo build"
-release = "cargo build --release"
-features = "cargo tree --features"

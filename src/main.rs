@@ -1,9 +1,9 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-// Note: All tests (automated and manual) are now unified in the tests/ directory
-// Run 'cargo test' for automated tests
-// Run 'cargo test -- --ignored' for manual/interactive tests
+// Note: This is a workspace project. Tests are in crates/*/tests/ directories
+// Run 'cargo test --workspace' to execute all tests across the workspace
+// Run 'cargo test -- --ignored' to run manual/interactive tests
 
 use dotenvy::dotenv;
 use emix::{Error, Result, set_debug};
@@ -16,11 +16,11 @@ async fn main() -> Result<()> {
     println!("EssentialMix Test Application");
     println!("==============================");
     println!();
-    println!("Automated tests are now in the tests/ directory.");
-    println!("Run 'cargo test' to execute all automated tests.");
+    println!("This is a workspace project. Tests are in crates/*/tests/ directories.");
+    println!("Run 'cargo test --workspace' to execute all tests across the workspace.");
     println!();
-    println!("Manual/interactive tests are in tests/manual_tests.rs");
-    println!("Run them with: cargo test -- --ignored");
+    println!("Manual/interactive tests (marked with #[ignore]) can be run with:");
+    println!("  cargo test --workspace -- --ignored");
     println!();
 
     // Example: Display error type

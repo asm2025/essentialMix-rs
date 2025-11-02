@@ -2,6 +2,8 @@ mod cond;
 pub use crate::cond::*;
 pub mod constants;
 pub mod consumer;
+mod signal;
+pub use self::signal::*;
 mod spinner;
 pub use self::spinner::*;
 
@@ -15,6 +17,7 @@ use tokio::{
 pub use emixcore::*;
 
 #[derive(Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[must_use]
 pub enum TaskResult {
     #[default]
     None,

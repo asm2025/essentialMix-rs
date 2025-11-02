@@ -58,7 +58,9 @@ pub trait IntoPath<T> {
 
 impl<T: AsRef<str>> IntoPath<T> for T {
     fn into_path(&self) -> PathBuf {
-        PathBuf::from(self.as_ref())
+        let mut path = PathBuf::new();
+        append_if_not_empty(&mut path, self.as_ref());
+        path
     }
 }
 

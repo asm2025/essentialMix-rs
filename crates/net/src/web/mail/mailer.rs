@@ -7,6 +7,7 @@ use crate::Result;
 use emix::Error;
 
 #[derive(Clone)]
+#[must_use]
 pub struct Mailer {
     smtp: SmtpTransport,
 }

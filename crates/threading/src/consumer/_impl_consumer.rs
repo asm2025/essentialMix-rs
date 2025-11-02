@@ -16,6 +16,7 @@ use tokio::{
 use crate::{constants::*, *};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[must_use]
 pub struct ConsumerOptions {
     pub threads: usize,
     pub threshold: Duration,
@@ -64,6 +65,7 @@ impl ConsumerOptions {
 }
 
 #[derive(Clone, Debug)]
+#[must_use]
 pub struct Consumer<T: StaticTaskItem> {
     pub options: ConsumerOptions,
     items: Arc<SegQueue<T>>,
