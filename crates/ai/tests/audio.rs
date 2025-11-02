@@ -1,8 +1,8 @@
 #[cfg(all(test, feature = "audio"))]
 mod tests {
     use emixai::{audio::Whisper, Result, SourceSize};
-    use std::path::PathBuf;
     use std::cell::RefCell;
+    use std::path::PathBuf;
 
     fn get_audio_file(name: &str) -> PathBuf {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -22,9 +22,9 @@ mod tests {
 
     #[test]
     fn test_whisper_transcribe_nonexistent_file() {
-        let _nonexistent = PathBuf::from("nonexistent_audio_file.mp3");
         // Note: This test requires a whisper model, so it's marked ignore
         // but it tests error handling for file not found
+        let _ = std::path::PathBuf::from("nonexistent_audio_file.mp3");
     }
 
     #[tokio::test]
