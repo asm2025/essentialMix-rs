@@ -16,7 +16,7 @@ use super::SourceSize;
 use crate::{Error, Result};
 
 #[allow(non_camel_case_types)]
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum OpenAiSource {
     gpt_3_5_turbo,
     #[default]

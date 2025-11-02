@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use emixcore::{is_debug, set_debug, system};
+    use emixcore::{is_debug, system};
 
     #[test]
     fn test_is_debug_default() {

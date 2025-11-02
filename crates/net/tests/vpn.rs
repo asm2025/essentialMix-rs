@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use emixcore::{Error, Result};
+    use emixcore::Result;
 
     #[cfg(feature = "vpn")]
     use emixnet::vpn::*;

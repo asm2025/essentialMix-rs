@@ -9,7 +9,7 @@ pub mod vision;
 
 pub use emix::{Error, Result};
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SourceSize {
     // Example: Phi-3 Mini, Orca Mini
     Tiny,
