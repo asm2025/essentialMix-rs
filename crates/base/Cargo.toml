@@ -1,0 +1,40 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "emix"
+description = "emix is a Rust library that has some basic utility functions and components."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+byteorder = "1"
+emixcore = { workspace = true }
+chrono = "0"
+crossterm = { version = "0", optional = true }
+csv = "1"
+dialoguer = { version = "0", optional = true }
+execute = "0"
+fake = { version = "4", features = ["derive", "uuid", "always-true-rng", "random_color", "chrono", "time", "http", "geo", "email_address"], optional = true}
+fs_extra = "1"
+glob = "0"
+rand = "0"
+randua = "0"
+rpassword = { version = "7", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+time = "0"
+tokio = { version = "1", features = ["full"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[features]
+full = ["terminal", "fake"]
+terminal = ["dep:crossterm", "dep:dialoguer", "dep:rpassword"]
+fake = ["dep:fake"]
+
+[package.metadata.scripts]
+run = "cargo run"
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+features = "cargo tree --features"

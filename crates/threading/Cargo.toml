@@ -1,0 +1,24 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "emixthreading"
+description = "emixthreading is a Rust library that has some basic utility functions and components."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+emixcore = { workspace = true }
+crossbeam = "0"
+futures = "0"
+glob = "0"
+indicatif = "0"
+time = "0"
+tokio = { version = "1", features = ["full"] }
+
+[package.metadata.scripts]
+run = "cargo run"
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+features = "cargo tree --features"

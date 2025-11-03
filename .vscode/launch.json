@@ -2,7 +2,7 @@
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
+    "version": "0.1.0",
     "configurations": [
         {
             "type": "lldb",
@@ -21,16 +21,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Test 'rustmix'",
+            "name": "Test 'essentialMix'",
             "cargo": {
-                "args": ["test", "--no-run", "--lib", "--package=rustmix"],
+                "args": ["test", "--no-run", "--lib", "--package=essentialMix"],
                 "filter": {
-                    "name": "rustmix",
+                    "name": "essentialMix",
                     "kind": "lib"
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}/rustmix"
+            "cwd": "${workspaceFolder}/essentialMix"
         }
     ]
 }

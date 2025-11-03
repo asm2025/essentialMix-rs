@@ -1,0 +1,40 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "emixnet"
+description = "emixnet is a Rust library that has some basic utility functions and components."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+emix = { workspace = true }
+emixcore = { workspace = true }
+chrono = "0"
+execute = { version = "0", optional = true }
+html-entities = { version = "0", optional = true }
+http-body-util = "0"
+lettre = { version = "0", optional = true }
+once_cell = { version = "1", optional = true }
+regex = "1"
+reqwest = { version = "0", features = ["blocking", "cookies", "http2", "json", "gzip", "deflate", "brotli", "zstd", "multipart", "socks", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+time = "0"
+url = { version = "2", features = ["serde"] }
+urlencoding = "2"
+
+[features]
+full = ["mail", "vpn"]
+mail = ["dep:html-entities", "dep:lettre", "dep:once_cell", "emix/fake"]
+vpn = ["dep:execute"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+
+[package.metadata.scripts]
+run = "cargo run"
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+features = "cargo tree --features"

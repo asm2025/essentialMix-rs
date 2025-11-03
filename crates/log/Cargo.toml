@@ -1,0 +1,39 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "emixlog"
+description = "emixlog is a Rust library that has some basic utility functions and components."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+emixcore = { workspace = true }
+chrono = "0"
+file-rotate = { version = "0", optional = true }
+log = "0"
+log4rs = { version = "1", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+slog = { version = "2", optional = true }
+slog-async = { version = "2", optional = true }
+slog-json = { version = "2", optional = true }
+slog-scope = { version = "4", optional = true }
+slog-stdlog = { version = "4", optional = true }
+slog-term = { version = "2", optional = true }
+
+[features]
+default = ["log4rs"]
+full = ["log4rs", "slog"]
+log4rs = ["dep:file-rotate", "dep:log4rs"]
+slog = ["dep:file-rotate", "dep:slog", "dep:slog-async", "dep:slog-json", "dep:slog-scope", "dep:slog-stdlog", "dep:slog-term"]
+
+[dev-dependencies]
+emix = { workspace = true, features = ["fake"] }
+
+[package.metadata.scripts]
+run = "cargo run"
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+features = "cargo tree --features"
