@@ -1,4 +1,6 @@
-use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
+pub mod unix;
+
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use std::time::Duration;
 
 use crate::{Error, Result};
@@ -39,16 +41,24 @@ pub fn utc_today() -> DateTime<Utc> {
 }
 
 pub fn format_duration(duration: Duration) -> String {
-    let total_seconds = duration.as_secs();
-    let hours = total_seconds / 3600;
-    let minutes = (total_seconds % 3600) / 60;
-    let seconds = total_seconds % 60;
-    let microseconds = duration.subsec_micros();
-    format!(
-        "{:02}:{:02}:{:02}.{:05}",
-        hours,
-        minutes,
-        seconds,
-        microseconds / 10
-    )
+    format_seconds_long(duration.as_micros())
+}
+
+pub fn format_seconds(time: i64) -> String {
+    Local
+        .timestamp_opt(time, 0)
+        .single()
+        .map(|dt| dt.format("%H:%M:%S").to_string())
+        .unwrap_or_else(|| "invalid time".to_string())
+}
+
+pub fn format_seconds_long(time: u128) -> String {
+    let secs = (time / 1_000_000) as i64;
+    let micros_in_sec = (time % 1_000_000) as u32;
+    let nanos = micros_in_sec * 1_000;
+    Local
+        .timestamp_opt(secs, nanos)
+        .single()
+        .map(|dt| dt.format("%H:%M:%S%.6f").to_string())
+        .unwrap_or_else(|| "invalid time".to_string())
 }

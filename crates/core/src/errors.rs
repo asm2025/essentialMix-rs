@@ -26,6 +26,12 @@ pub enum Error {
     #[error("Argument error. {0}")]
     Argument(String),
 
+    #[error("Index out of range.")]
+    IndexOutOfRange,
+
+    #[error("Not enough data.")]
+    NotEnoughData,
+
     #[error("Parse error. {0}")]
     Parse(String),
 

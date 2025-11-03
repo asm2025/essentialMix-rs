@@ -12,7 +12,7 @@ use crate::web::reqwestx::build_client_for_api;
 use emix::random;
 use emix::{
     Error,
-    date::{parse_date, parse_date_ftz, utc_today},
+    datetime::{parse_date, parse_date_ftz, utc_today},
 };
 
 const URL_TEMP_MAIL: &str = "https://api.internal.temp-mail.io/api/v3/";

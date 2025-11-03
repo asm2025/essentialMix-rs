@@ -107,9 +107,10 @@ pub fn get(prompt: Option<&str>) -> Result<String> {
     let mut buffer = String::new();
     stdin().read_line(&mut buffer)?;
 
-    if !buffer.is_empty() {
-        // Remove the trailing newlines
-        buffer.pop();
+    // Remove trailing newlines (handles both Unix \n and Windows \r\n)
+    let trimmed_len = buffer.trim_end().len();
+    if trimmed_len < buffer.len() {
+        buffer.truncate(trimmed_len);
     }
 
     Ok(buffer)
@@ -179,13 +180,18 @@ pub fn confirm(prompt: Option<&str>) -> Result<bool> {
 
     match input {
         'y' | 'Y' => Ok(true),
-        _ => Err(Error::NoInput),
+        'n' | 'N' => Ok(false),
+        _ => Err(Error::InvalidInput("Expected 'y' or 'n'".to_string())),
     }
 }
 
 pub fn pause() {
     println!("Press any key to continue...");
-    let _ = get_char(None);
+    // Explicitly handle error to ensure raw mode is disabled if needed
+    // Error is ignored as this is a best-effort pause function
+    if let Err(_) = get_char(None) {
+        // get_char already disables raw mode on error, so nothing needed here
+    }
 }
 
 fn print_prompt(prompt: Option<&str>) {
