@@ -37,6 +37,7 @@ members = [
 	"crates/log",
 	"crates/net",
 	"crates/threading",
+	"crates/db",
 ]
 
 [workspace.package]
@@ -52,6 +53,7 @@ emixcore = { path = "crates/core" }
 emixlog = { path = "crates/log" }
 emixnet = { path = "crates/net" }
 emixthreading = { path = "crates/threading" }
+emixdb = { path = "crates/db" }
 parking_lot = "0"
 
 [profile.dist]

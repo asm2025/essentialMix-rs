@@ -1,0 +1,22 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "emixdb"
+description = "emixdb is a Rust library that has some basic utility functions and components."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+emixcore = { workspace = true }
+async-trait = "0"
+chrono = "0"
+serde = { version = "1", features = ["derive"] }
+sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+
+[package.metadata.scripts]
+run = "cargo run"
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+features = "cargo tree --features"
