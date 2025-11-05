@@ -1820,6 +1820,7 @@ dependencies = [
  "emixcore",
  "sea-orm",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
