@@ -75,10 +75,15 @@ pub struct UpdateTagDto {
 }
 
 impl Merge<ActiveModel> for UpdateTagDto {
-    fn merge(&self, model: &mut ActiveModel) {
+    fn merge(&self, model: &mut ActiveModel) -> bool {
+        let mut changed = false;
+
         if let Some(name) = self.name.as_ref() {
             model.name = Set(name.clone());
+            changed = true;
         }
+
+        changed
     }
 }
 
@@ -86,4 +91,3 @@ pub use ActiveModel as TagModelDto;
 pub use Column as TagColumn;
 pub use Entity as TagEntity;
 pub use Model as TagModel;
-

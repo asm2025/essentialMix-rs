@@ -36,8 +36,8 @@ pub enum Relation {
 // In a real implementation, replace these with your actual module paths:
 // use super::tag;
 // use super::image_tag;
-use crate::tag;
 use crate::image_tag;
+use crate::tag;
 
 impl Related<tag::Entity> for Entity {
     fn to() -> RelationDef {
@@ -144,39 +144,51 @@ pub struct UpdateImageDto {
 }
 
 impl Merge<ActiveModel> for UpdateImageDto {
-    fn merge(&self, model: &mut ActiveModel) {
+    fn merge(&self, model: &mut ActiveModel) -> bool {
         // can also use: if let Some(title) = self.title.as_ref() {
+        let mut changed = false;
+
         if let Some(ref title) = self.title {
             model.title = Set(title.clone());
+            changed = true;
         }
 
         if let Some(ref description) = self.description {
             model.description = Set(Some(description.clone()));
+            changed = true;
         }
 
         if let Some(ref extension) = self.extension {
             model.extension = Set(extension.clone());
+            changed = true;
         }
 
         if let Some(file_size) = self.file_size {
             model.file_size = Set(file_size);
+            changed = true;
         }
 
         if let Some(ref mime_type) = self.mime_type {
             model.mime_type = Set(mime_type.clone());
+            changed = true;
         }
 
         if let Some(width) = self.width {
             model.width = Set(Some(width));
+            changed = true;
         }
 
         if let Some(height) = self.height {
             model.height = Set(Some(height));
+            changed = true;
         }
 
         if let Some(ref alt_text) = self.alt_text {
             model.alt_text = Set(Some(alt_text.clone()));
+            changed = true;
         }
+
+        changed
     }
 }
 
@@ -184,4 +196,3 @@ pub use ActiveModel as ImageModelDto;
 pub use Column as ImageColumn;
 pub use Entity as ImageEntity;
 pub use Model as ImageModel;
-

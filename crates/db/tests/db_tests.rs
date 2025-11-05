@@ -32,10 +32,15 @@ mod tests {
     }
 
     impl Merge<TestActiveModel> for UpdateDto {
-        fn merge(&self, model: &mut TestActiveModel) {
+        fn merge(&self, model: &mut TestActiveModel) -> bool {
+            let mut changed = false;
+
             if let Some(ref name) = self.name {
                 model.name = Some(name.clone());
+                changed = true;
             }
+
+            changed
         }
     }
 
