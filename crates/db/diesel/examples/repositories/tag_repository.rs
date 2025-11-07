@@ -2,11 +2,9 @@
 // This file demonstrates how to use the emix-diesel crate to create repository implementations
 
 use async_trait::async_trait;
-use diesel::prelude::*;
 use diesel::{delete, insert_into, update};
-use diesel_async::{AsyncConnection, RunQueryDsl};
 
-use emixdiesel::{Error, Result, prelude::*};
+use emixdiesel::{Error, Result, prelude::*, repositories::*};
 
 // In a real implementation, you would import your schema entities from your own crate
 // For this example, we assume the schema entities are available in scope

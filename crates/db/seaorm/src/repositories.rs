@@ -1,13 +1,12 @@
+pub use emixdb::repositories::*;
+
 use async_trait::async_trait;
 use sea_orm::{
     Condition, DatabaseConnection, DatabaseTransaction, EntityTrait, PrimaryKeyTrait, QueryFilter,
     Select, SelectTwoMany,
 };
 
-pub use emixdb::prelude::{ModelWithRelated, Pagination, ResultSet};
-
-use super::schema::Merge;
-use crate::Result;
+use crate::{Result, schema::Merge};
 
 pub struct ClosureFilter<F>
 where

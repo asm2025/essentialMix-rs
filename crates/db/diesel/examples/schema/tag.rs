@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::tables::tags;
-use emixdiesel::prelude::*;
+use emixdiesel::schema::*;
 
 // Example: Tag model
 #[derive(

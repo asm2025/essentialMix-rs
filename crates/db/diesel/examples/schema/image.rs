@@ -6,7 +6,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::tables::images;
-use emixdiesel::prelude::*;
+use emixdiesel::schema::*;
 
 // Example: Image model
 #[derive(

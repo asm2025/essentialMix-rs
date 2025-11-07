@@ -1,7 +1,7 @@
+pub use emixdb::repositories::*;
+
 use async_trait::async_trait;
 use diesel_async::AsyncConnection;
-
-use emixdb::prelude::*;
 
 use crate::Result;
 

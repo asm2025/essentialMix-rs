@@ -1,4 +1,4 @@
-use emixdiesel::prelude::*;
+use emixdiesel::repositories::*;
 
 // Test data structures
 #[derive(Debug, Clone, PartialEq)]
@@ -132,8 +132,7 @@ fn test_filter_query_overwrites_values() {
 fn test_multiple_closure_filters() {
     let filter1 = ClosureFilter::new(|query: TestQuery| query.with_limit(10));
     let filter2 = ClosureFilter::new(|query: TestQuery| query.with_offset(5));
-    let filter3 =
-        ClosureFilter::new(|query: TestQuery| query.with_filter_name("test".to_string()));
+    let filter3 = ClosureFilter::new(|query: TestQuery| query.with_filter_name("test".to_string()));
 
     let query = TestQuery::new();
     let query = filter1.apply(query);
@@ -148,8 +147,7 @@ fn test_multiple_closure_filters() {
 #[test]
 fn test_filter_with_move_semantics() {
     let name = "dynamic_filter".to_string();
-    let filter =
-        ClosureFilter::new(move |query: TestQuery| query.with_filter_name(name.clone()));
+    let filter = ClosureFilter::new(move |query: TestQuery| query.with_filter_name(name.clone()));
 
     let query = TestQuery::new();
     let filtered = filter.apply(query);
@@ -168,4 +166,3 @@ fn test_phantom_data_size() {
     // PhantomData should have zero size
     assert_eq!(size_of::<std::marker::PhantomData<i32>>(), 0);
 }
-
