@@ -1,4 +1,4 @@
-use emixdb::prelude::*;
+use emixdb::repositories::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -264,4 +264,3 @@ fn test_result_set_clone() {
     assert_eq!(result_set.total, cloned.total);
     assert_eq!(result_set.pagination, cloned.pagination);
 }
-

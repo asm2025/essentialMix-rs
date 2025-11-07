@@ -1,4 +1,4 @@
-use emixdb::prelude::*;
+use emixdb::schema::*;
 
 #[derive(Debug, Clone, PartialEq)]
 struct User {
@@ -191,4 +191,3 @@ fn test_merge_preserves_id() {
     update.merge(&mut user);
     assert_eq!(user.id, 1); // ID should not change
 }
-
