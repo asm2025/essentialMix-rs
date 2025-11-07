@@ -121,4 +121,3 @@ mod tests {
         assert_eq!(INTERVAL, 100);
     }
 }
-

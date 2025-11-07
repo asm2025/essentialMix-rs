@@ -35,4 +35,3 @@ fn test_slog_from_code() -> emixcore::Result<()> {
 
     Ok(())
 }
-

@@ -1,0 +1,29 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "emixdiesel"
+description = "emix-diesel is a Rust library that has some basic utility functions and components for Diesel ORM."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+emixcore = { workspace = true }
+emixdb = { workspace = true }
+async-trait = "0"
+chrono = { version = "0", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+diesel = { version = "2", features = ["sqlite", "postgres", "r2d2", "chrono", "returning_clauses_for_sqlite_3_35"] }
+diesel-async = { version = "0", features = ["sqlite", "postgres", "sync-connection-wrapper"] }
+
+[dev-dependencies]
+serde_json = "1"
+libsqlite3-sys = { version = "0.30", features = ["bundled"] }
+
+[package.metadata.scripts]
+run = "cargo run"
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+features = "cargo tree --features"
+

@@ -1,10 +1,11 @@
 use fake::{
+    Fake,
     faker::{
         administrative::raw as f_administrative, company::raw as f_company,
         creditcard::raw as f_creditcard, currency::raw as f_currency, finance::raw as f_finance,
         job::raw as f_job, phone_number::raw as f_phone_number,
     },
-    locales, Fake,
+    locales,
 };
 
 pub fn insurance_code() -> String {

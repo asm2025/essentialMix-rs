@@ -32,10 +32,16 @@ mod tests {
         assert_eq!(OpenAiSource::gpt_3_5_turbo.to_string(), "gpt-3.5-turbo");
         assert_eq!(OpenAiSource::gpt_4o_mini.to_string(), "gpt-4o-mini");
         assert_eq!(OpenAiSource::gpt_4o.to_string(), "gpt-4o");
-        assert_eq!(OpenAiSource::gpt_4o_2024_08_06.to_string(), "gpt-4o-2024-08-06");
+        assert_eq!(
+            OpenAiSource::gpt_4o_2024_08_06.to_string(),
+            "gpt-4o-2024-08-06"
+        );
         assert_eq!(OpenAiSource::gpt_4.to_string(), "gpt-4");
         assert_eq!(OpenAiSource::gpt_4_turbo.to_string(), "gpt-4-turbo");
-        assert_eq!(OpenAiSource::gpt_4_turbo_preview.to_string(), "gpt-4-turbo-preview");
+        assert_eq!(
+            OpenAiSource::gpt_4_turbo_preview.to_string(),
+            "gpt-4-turbo-preview"
+        );
         assert_eq!(OpenAiSource::o1_mini.to_string(), "o1-mini");
         assert_eq!(OpenAiSource::o1_preview.to_string(), "o1-preview");
         assert_eq!(OpenAiSource::o3_mini.to_string(), "o3-mini");

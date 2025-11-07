@@ -19,14 +19,25 @@ mod tests {
     #[test]
     fn test_random_alphanum_str() {
         let s = random::alphanum_str(10);
-        assert_eq!(s.len(), 10, "Alphanumeric string should be exactly 10 characters");
-        assert!(s.chars().all(|c| c.is_alphanumeric()), "String should contain only alphanumeric characters");
+        assert_eq!(
+            s.len(),
+            10,
+            "Alphanumeric string should be exactly 10 characters"
+        );
+        assert!(
+            s.chars().all(|c| c.is_alphanumeric()),
+            "String should contain only alphanumeric characters"
+        );
     }
 
     #[test]
     fn test_random_alphanum_str_zero_length() {
         let s = random::alphanum_str(0);
-        assert_eq!(s.len(), 0, "Alphanumeric string should be empty when length is 0");
+        assert_eq!(
+            s.len(),
+            0,
+            "Alphanumeric string should be empty when length is 0"
+        );
     }
 
     #[test]
@@ -62,7 +73,10 @@ mod tests {
     #[test]
     fn test_random_numeric_float() {
         let n = random::numeric(1.0..10.0);
-        assert!(n >= 1.0 && n < 10.0, "Float numeric should be in range 1.0..10.0");
+        assert!(
+            n >= 1.0 && n < 10.0,
+            "Float numeric should be in range 1.0..10.0"
+        );
     }
 
     #[test]
@@ -255,12 +269,15 @@ mod tests {
         let date = Utc::now();
         let before = random::datetime::before(date);
         let after = random::datetime::after(date);
-        
+
         assert!(before < date, "Before date should be in the past");
         assert!(after > date, "After date should be in the future");
-        
+
         let between = random::datetime::between(before, after);
-        assert!(between >= before && between <= after, "Between date should be within range");
+        assert!(
+            between >= before && between <= after,
+            "Between date should be within range"
+        );
     }
 
     // Filesystem tests
@@ -349,4 +366,3 @@ mod tests {
         assert!(!last_name.is_empty(), "Last name should not be empty");
     }
 }
-

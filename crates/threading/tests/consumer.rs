@@ -2,16 +2,19 @@
 mod tests {
     use emixcore::Result;
     use emixthreading::{
-        TaskDelegation, TaskResult, QueueBehavior,
-        consumer::{Consumer, ConsumerOptions, ProducerConsumer, ProducerConsumerOptions, InjectorWorker, InjectorWorkerOptions},
+        QueueBehavior, TaskDelegation, TaskResult,
+        consumer::{
+            Consumer, ConsumerOptions, InjectorWorker, InjectorWorkerOptions, ProducerConsumer,
+            ProducerConsumerOptions,
+        },
     };
     use std::{
         sync::{
-            atomic::{AtomicUsize, Ordering},
             Arc,
+            atomic::{AtomicUsize, Ordering},
         },
-        time::Duration,
         thread,
+        time::Duration,
     };
 
     const THREADS: usize = 2; // Reduced for faster tests
@@ -47,7 +50,7 @@ mod tests {
 
         fn process(&self, _pc: &Consumer<usize>, item: &usize) -> Result<TaskResult> {
             self.tasks.fetch_add(1, Ordering::SeqCst);
-            
+
             if item % 5 == 0 {
                 return Ok(TaskResult::Error(
                     format!("Item {}. Multiples of 5 are not allowed", item).into(),
@@ -90,11 +93,11 @@ mod tests {
 
         let tasks_processed = handler.tasks();
         let tasks_done = handler.done();
-        
+
         assert!(tasks_processed > 0, "Should have processed some tasks");
         assert!(tasks_done > 0, "Should have completed some tasks");
         // Note: Some tasks might error or timeout, so done might be less than processed
-        
+
         Ok(())
     }
 
@@ -105,7 +108,7 @@ mod tests {
 
         fn process(&self, _pc: &ProducerConsumer<usize>, item: &usize) -> Result<TaskResult> {
             self.tasks.fetch_add(1, Ordering::SeqCst);
-            
+
             if item % 5 == 0 {
                 return Ok(TaskResult::Error(
                     format!("Item {}. Multiples of 5 are not allowed", item).into(),
@@ -142,7 +145,7 @@ mod tests {
         let options = ProducerConsumerOptions::new().with_threads(THREADS);
         let prodcon = ProducerConsumer::<usize>::with_options(options);
         prodcon.start(&handler.clone())?;
-        
+
         let pc = prodcon.clone();
         tokio::spawn(async move {
             for i in 1..=TEST_SIZE {
@@ -157,10 +160,10 @@ mod tests {
 
         let tasks_processed = handler.tasks();
         let tasks_done = handler.done();
-        
+
         assert!(tasks_processed > 0, "Should have processed some tasks");
         assert!(tasks_done > 0, "Should have completed some tasks");
-        
+
         Ok(())
     }
 
@@ -171,7 +174,7 @@ mod tests {
 
         fn process(&self, _pc: &InjectorWorker<usize>, item: &usize) -> Result<TaskResult> {
             self.tasks.fetch_add(1, Ordering::SeqCst);
-            
+
             if item % 5 == 0 {
                 return Ok(TaskResult::Error(
                     format!("Item {}. Multiples of 5 are not allowed", item).into(),
@@ -183,7 +186,12 @@ mod tests {
             Ok(TaskResult::Success)
         }
 
-        fn on_completed(&self, _pc: &InjectorWorker<usize>, _item: &usize, _result: &TaskResult) -> bool {
+        fn on_completed(
+            &self,
+            _pc: &InjectorWorker<usize>,
+            _item: &usize,
+            _result: &TaskResult,
+        ) -> bool {
             self.done.fetch_add(1, Ordering::SeqCst);
             true
         }
@@ -214,10 +222,10 @@ mod tests {
 
         let tasks_processed = handler.tasks();
         let tasks_done = handler.done();
-        
+
         assert!(tasks_processed > 0, "Should have processed some tasks");
         assert!(tasks_done > 0, "Should have completed some tasks");
-        
+
         Ok(())
     }
 
@@ -253,8 +261,11 @@ mod tests {
         consumer.wait_async().await?;
 
         let tasks_processed = handler.tasks();
-        assert!(tasks_processed >= 100, "Should have processed at least 100 tasks from concurrent enqueues");
-        
+        assert!(
+            tasks_processed >= 100,
+            "Should have processed at least 100 tasks from concurrent enqueues"
+        );
+
         Ok(())
     }
 
@@ -273,11 +284,11 @@ mod tests {
 
         let tasks_processed = handler.tasks();
         let tasks_done = handler.done();
-        
+
         assert!(tasks_processed > 0, "Should have processed some tasks");
         assert!(tasks_done > 0, "Should have completed some tasks");
         // Note: on_completed is called for all results, so done == processed
-        
+
         Ok(())
     }
 
@@ -287,7 +298,7 @@ mod tests {
         let options = ProducerConsumerOptions::new().with_threads(THREADS);
         let prodcon = ProducerConsumer::<usize>::with_options(options);
         prodcon.start(&handler.clone())?;
-        
+
         let pc1 = prodcon.clone();
         let pc2 = prodcon.clone();
         let pc3 = prodcon.clone();
@@ -295,17 +306,23 @@ mod tests {
         let _ = tokio::join!(
             tokio::spawn(async move {
                 for i in 1..50 {
-                    if let Err(_) = pc1.enqueue(i) { break; }
+                    if let Err(_) = pc1.enqueue(i) {
+                        break;
+                    }
                 }
             }),
             tokio::spawn(async move {
                 for i in 50..100 {
-                    if let Err(_) = pc2.enqueue(i) { break; }
+                    if let Err(_) = pc2.enqueue(i) {
+                        break;
+                    }
                 }
             }),
             tokio::spawn(async move {
                 for i in 100..151 {
-                    if let Err(_) = pc3.enqueue(i) { break; }
+                    if let Err(_) = pc3.enqueue(i) {
+                        break;
+                    }
                 }
             })
         );
@@ -314,8 +331,11 @@ mod tests {
         prodcon.wait_async().await?;
 
         let tasks_processed = handler.tasks();
-        assert!(tasks_processed >= 100, "Should have processed tasks from multiple producers");
-        
+        assert!(
+            tasks_processed >= 100,
+            "Should have processed tasks from multiple producers"
+        );
+
         Ok(())
     }
 
@@ -325,12 +345,14 @@ mod tests {
         let options = ProducerConsumerOptions::new().with_threads(4);
         let prodcon = ProducerConsumer::<usize>::with_options(options);
         prodcon.start(&handler.clone())?;
-        
+
         let pc = prodcon.clone();
         tokio::spawn(async move {
             // Enqueue many items rapidly
             for i in 1..=1000 {
-                if let Err(_) = pc.enqueue(i) { break; }
+                if let Err(_) = pc.enqueue(i) {
+                    break;
+                }
             }
             pc.complete();
         });
@@ -338,8 +360,11 @@ mod tests {
         prodcon.wait_async().await?;
 
         let tasks_processed = handler.tasks();
-        assert!(tasks_processed > 500, "Should have processed many tasks under stress");
-        
+        assert!(
+            tasks_processed > 500,
+            "Should have processed many tasks under stress"
+        );
+
         Ok(())
     }
 
@@ -368,9 +393,15 @@ mod tests {
         injwork2.complete();
         injwork2.wait_async().await?;
 
-        assert!(handler1.tasks() > 0, "First handler should have processed tasks");
-        assert!(handler2.tasks() > 0, "Second handler should have processed tasks");
-        
+        assert!(
+            handler1.tasks() > 0,
+            "First handler should have processed tasks"
+        );
+        assert!(
+            handler2.tasks() > 0,
+            "Second handler should have processed tasks"
+        );
+
         Ok(())
     }
 
@@ -388,24 +419,27 @@ mod tests {
         // Pause the consumer
         consumer.pause();
         assert!(consumer.is_paused(), "Consumer should be paused");
-        
+
         // Give it a bit of time to process some items while paused
         tokio::time::sleep(Duration::from_millis(100)).await;
-        
+
         let tasks_before_resume = handler.tasks();
-        
+
         // Resume the consumer
         consumer.resume();
         assert!(!consumer.is_paused(), "Consumer should be resumed");
-        
+
         // Complete and wait for processing
         consumer.complete();
         consumer.wait_async().await?;
 
         let tasks_after = handler.tasks();
-        assert!(tasks_after > tasks_before_resume, "Should have processed more tasks after resume");
+        assert!(
+            tasks_after > tasks_before_resume,
+            "Should have processed more tasks after resume"
+        );
         assert!(tasks_after > 0, "Should have processed some tasks");
-        
+
         Ok(())
     }
 
@@ -422,18 +456,21 @@ mod tests {
 
         // Give it some time to process
         tokio::time::sleep(Duration::from_millis(50)).await;
-        
+
         // Cancel the consumer
         consumer.cancel();
         assert!(consumer.is_cancelled(), "Consumer should be cancelled");
-        
+
         // Try to enqueue after cancel - should fail
-        assert!(consumer.enqueue(9999).is_err(), "Should not be able to enqueue after cancel");
-        
+        assert!(
+            consumer.enqueue(9999).is_err(),
+            "Should not be able to enqueue after cancel"
+        );
+
         // Wait for cancellation
         let result = consumer.wait_async().await;
         assert!(result.is_err(), "Wait should return error when cancelled");
-        
+
         Ok(())
     }
 
@@ -445,8 +482,11 @@ mod tests {
 
         // Don't enqueue anything, just wait for a short timeout
         let result = consumer.wait_for(Duration::from_millis(100));
-        assert!(result.is_err(), "Wait_for should timeout when no items are processing");
-        
+        assert!(
+            result.is_err(),
+            "Wait_for should timeout when no items are processing"
+        );
+
         Ok(())
     }
 
@@ -458,8 +498,11 @@ mod tests {
 
         // Don't enqueue anything, just wait for a short timeout
         let result = consumer.wait_for_async(Duration::from_millis(100)).await;
-        assert!(result.is_err(), "Wait_for_async should timeout when no items are processing");
-        
+        assert!(
+            result.is_err(),
+            "Wait_for_async should timeout when no items are processing"
+        );
+
         Ok(())
     }
 
@@ -469,7 +512,7 @@ mod tests {
         let options = ProducerConsumerOptions::new().with_threads(THREADS);
         let prodcon = ProducerConsumer::<usize>::with_options(options);
         prodcon.start(&handler)?;
-        
+
         // Enqueue some items
         for i in 1..=50 {
             prodcon.enqueue(i)?;
@@ -477,27 +520,30 @@ mod tests {
 
         // Give it a bit of time to process some items
         thread::sleep(Duration::from_millis(100));
-        
+
         // Pause the producer-consumer
         prodcon.pause();
         assert!(prodcon.is_paused(), "ProducerConsumer should be paused");
-        
+
         // Give it a bit more time while paused
         thread::sleep(Duration::from_millis(100));
-        
+
         let tasks_before_resume = handler.tasks();
-        
+
         // Resume
         prodcon.resume();
         assert!(!prodcon.is_paused(), "ProducerConsumer should be resumed");
-        
+
         prodcon.complete();
         prodcon.wait()?;
 
         let tasks_after = handler.tasks();
-        assert!(tasks_after >= tasks_before_resume, "Should not have processed fewer tasks after resume");
+        assert!(
+            tasks_after >= tasks_before_resume,
+            "Should not have processed fewer tasks after resume"
+        );
         assert!(tasks_after > 0, "Should have processed some tasks");
-        
+
         Ok(())
     }
 
@@ -507,24 +553,29 @@ mod tests {
         let options = ProducerConsumerOptions::new().with_threads(THREADS);
         let prodcon = ProducerConsumer::<usize>::with_options(options);
         prodcon.start(&handler)?;
-        
+
         // Enqueue items
         let pc = prodcon.clone();
         tokio::spawn(async move {
             for i in 1..=1000 {
-                if let Err(_) = pc.enqueue(i) { break; }
+                if let Err(_) = pc.enqueue(i) {
+                    break;
+                }
             }
         });
 
         tokio::time::sleep(Duration::from_millis(50)).await;
-        
+
         // Cancel
         prodcon.cancel();
-        assert!(prodcon.is_cancelled(), "ProducerConsumer should be cancelled");
-        
+        assert!(
+            prodcon.is_cancelled(),
+            "ProducerConsumer should be cancelled"
+        );
+
         let result = prodcon.wait_async().await;
         assert!(result.is_err(), "Wait should return error when cancelled");
-        
+
         Ok(())
     }
 
@@ -543,20 +594,23 @@ mod tests {
         // Pause
         injwork.pause();
         assert!(injwork.is_paused(), "InjectorWorker should be paused");
-        
+
         tokio::time::sleep(Duration::from_millis(100)).await;
         let tasks_before = handler.tasks();
-        
+
         // Resume
         injwork.resume();
         assert!(!injwork.is_paused(), "InjectorWorker should be resumed");
-        
+
         injwork.complete();
         injwork.wait_async().await?;
 
         let tasks_after = handler.tasks();
-        assert!(tasks_after > tasks_before, "Should have processed more tasks after resume");
-        
+        assert!(
+            tasks_after > tasks_before,
+            "Should have processed more tasks after resume"
+        );
+
         Ok(())
     }
 
@@ -573,14 +627,14 @@ mod tests {
         }
 
         tokio::time::sleep(Duration::from_millis(50)).await;
-        
+
         // Cancel
         injwork.cancel();
         assert!(injwork.is_cancelled(), "InjectorWorker should be cancelled");
-        
+
         let result = injwork.wait_async().await;
         assert!(result.is_err(), "Wait should return error when cancelled");
-        
+
         Ok(())
     }
 
@@ -602,7 +656,7 @@ mod tests {
 
         let tasks_processed = handler.tasks();
         assert!(tasks_processed > 0, "Should have processed tasks");
-        
+
         Ok(())
     }
 
@@ -624,7 +678,7 @@ mod tests {
 
         let tasks_processed = handler.tasks();
         assert!(tasks_processed > 0, "Should have processed tasks");
-        
+
         Ok(())
     }
 
@@ -645,7 +699,7 @@ mod tests {
 
         let result = consumer.wait_async().await;
         assert!(result.is_err(), "Wait should return error when cancelled");
-        
+
         Ok(())
     }
 
@@ -662,12 +716,15 @@ mod tests {
 
         // Stop with enforce=false should complete
         consumer.stop(false);
-        assert!(consumer.is_completed(), "Stop with enforce=false should complete");
+        assert!(
+            consumer.is_completed(),
+            "Stop with enforce=false should complete"
+        );
         assert!(!consumer.is_cancelled(), "Should not be cancelled");
 
         consumer.wait_async().await?;
         assert!(handler.tasks() > 0, "Should have processed tasks");
-        
+
         Ok(())
     }
 
@@ -681,7 +738,9 @@ mod tests {
         let pc = prodcon.clone();
         tokio::spawn(async move {
             for i in 1..=5000 {
-                if let Err(_) = pc.enqueue(i) { break; }
+                if let Err(_) = pc.enqueue(i) {
+                    break;
+                }
             }
             pc.complete();
         });
@@ -690,7 +749,7 @@ mod tests {
 
         let tasks_processed = handler.tasks();
         assert!(tasks_processed > 1000, "Should have processed many tasks");
-        
+
         Ok(())
     }
 
@@ -708,7 +767,7 @@ mod tests {
         injwork.wait_async().await?;
 
         assert_eq!(handler.tasks(), 0, "Should not have processed any tasks");
-        
+
         Ok(())
     }
 
@@ -716,41 +775,46 @@ mod tests {
     async fn test_consumer_double_start_error() -> Result<()> {
         let handler = TestTaskHandler::new();
         let consumer = Consumer::<usize>::new();
-        
+
         // Start once
         consumer.start(&handler.clone())?;
-        
+
         // Try to start again - should fail
         let result = consumer.start(&handler);
         assert!(result.is_err(), "Should not be able to start twice");
-        
+
         consumer.cancel();
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_consumer_state_queries() -> Result<()> {
         let consumer = Consumer::<usize>::new();
-        
+
         // Initially not started, not completed, not cancelled
         assert!(!consumer.is_started(), "Should not be started initially");
-        assert!(!consumer.is_completed(), "Should not be completed initially");
-        assert!(!consumer.is_cancelled(), "Should not be cancelled initially");
+        assert!(
+            !consumer.is_completed(),
+            "Should not be completed initially"
+        );
+        assert!(
+            !consumer.is_cancelled(),
+            "Should not be cancelled initially"
+        );
         assert!(consumer.is_empty(), "Should be empty initially");
         assert_eq!(consumer.len(), 0, "Length should be 0");
         assert_eq!(consumer.consumers(), 0, "Should have 0 consumers");
-        
+
         let handler = TestTaskHandler::new();
         consumer.start(&handler)?;
-        
+
         // After start
         assert!(consumer.is_started(), "Should be started");
         assert_eq!(consumer.consumers(), 1, "Should have 1 consumer by default");
-        
+
         consumer.cancel();
-        
+
         Ok(())
     }
 }
-

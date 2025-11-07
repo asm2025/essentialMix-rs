@@ -1,7 +1,4 @@
-use lettre::{
-    Message, SmtpTransport, Transport,
-    transport::smtp::authentication::Credentials,
-};
+use lettre::{Message, SmtpTransport, Transport, transport::smtp::authentication::Credentials};
 
 use crate::Result;
 use emix::Error;
@@ -33,7 +30,8 @@ impl Mailer {
             .subject(subject)
             .body(body.to_string())
             .map_err(|e| Error::from_std_error(e))?;
-        self.smtp.send(&email)
+        self.smtp
+            .send(&email)
             .map_err(|e| Error::from_std_error(e))?;
         Ok(())
     }

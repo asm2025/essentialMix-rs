@@ -1,0 +1,19 @@
+[package]
+name = "emixdb"
+description = "emixdb is a Rust library providing common types and traits for database ORM abstractions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+serde_json = "1"
+
+[package.metadata.scripts]
+check = "cargo check"
+build = "cargo build"
+release = "cargo build --release"
+

@@ -29,7 +29,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -60,7 +61,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -70,7 +72,10 @@ impl ExpressVPN {
             return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?.trim().to_string();
+        let text = String::from_utf8(output.stdout)
+            .map_err(|e| Error::from_std_error(e))?
+            .trim()
+            .to_string();
 
         if text.contains("Not Activated") {
             return Ok(ExpressVPNStatus::NotActivated);
@@ -128,7 +133,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -138,7 +144,10 @@ impl ExpressVPN {
             return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?.trim().to_string();
+        let text = String::from_utf8(output.stdout)
+            .map_err(|e| Error::from_std_error(e))?
+            .trim()
+            .to_string();
         match text.find("Connected to") {
             Some(n) => {
                 let l = text[n..].find('\n').unwrap_or(text.len());
@@ -169,7 +178,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -184,7 +194,10 @@ impl ExpressVPN {
             return Err(Error::Command(ret, msg));
         }
 
-        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?.trim().to_string();
+        let text = String::from_utf8(output.stdout)
+            .map_err(|e| Error::from_std_error(e))?
+            .trim()
+            .to_string();
 
         if text.contains("Disconnected") {
             return Ok(ExpressVPNStatus::Disconnected);
@@ -204,7 +217,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -214,8 +228,7 @@ impl ExpressVPN {
             return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)
-            .map_err(|e| Error::from_std_error(e))?;
+        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?;
         Ok(self.locations_from_string(&text))
     }
 
@@ -230,7 +243,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -240,8 +254,7 @@ impl ExpressVPN {
             return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)
-            .map_err(|e| Error::from_std_error(e))?;
+        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?;
         Ok(self.locations_from_string(&text))
     }
 
@@ -256,7 +269,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -266,8 +280,7 @@ impl ExpressVPN {
             return Err(Error::Command(ret, stderr));
         }
 
-        let text = String::from_utf8(output.stdout)
-            .map_err(|e| Error::from_std_error(e))?;
+        let text = String::from_utf8(output.stdout).map_err(|e| Error::from_std_error(e))?;
         Ok(self.locations_from_string(&text))
     }
 
@@ -300,7 +313,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -325,7 +339,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };
@@ -350,7 +365,8 @@ impl ExpressVPN {
         let ret = match output.status.code() {
             Some(ret) => ret,
             None => {
-                let stderr = String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
+                let stderr =
+                    String::from_utf8(output.stderr).map_err(|e| Error::from_std_error(e))?;
                 return Err(Error::Command(-1, stderr));
             }
         };

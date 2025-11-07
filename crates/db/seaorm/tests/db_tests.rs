@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use emixdb::{
+    use emixseaorm::{
         repositories::{ClosureFilter, DirectCondition, ModelWithRelated, Pagination, ResultSet},
         schema::Merge,
     };

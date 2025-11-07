@@ -1,10 +1,7 @@
 #[cfg(all(test, feature = "language"))]
 mod tests {
     use async_openai::config::OpenAIConfig;
-    use emixai::{
-        Error, Result, SourceSize,
-        language::openai::ChatGpt,
-    };
+    use emixai::{Error, Result, SourceSize, language::openai::ChatGpt};
 
     #[test]
     fn test_chatgpt_new() {
@@ -56,4 +53,3 @@ mod tests {
         assert!(matches!(result, Err(Error::NoInput)));
     }
 }
-

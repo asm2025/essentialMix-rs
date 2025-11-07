@@ -62,10 +62,9 @@ impl Whisper {
         file_name: T,
         callback: impl Fn(&str) -> (),
     ) -> Result<()> {
-        let file = File::open(file_name)
-            .map_err(|e| emix::Error::from_std_error(e))?;
-        let source = Decoder::new(BufReader::new(file))
-            .map_err(|e| emix::Error::from_std_error(e))?;
+        let file = File::open(file_name).map_err(|e| emix::Error::from_std_error(e))?;
+        let source =
+            Decoder::new(BufReader::new(file)).map_err(|e| emix::Error::from_std_error(e))?;
         let mut stream = self.model.transcribe(source);
         block_on(async move {
             while let Some(result) = stream.next().await {
@@ -80,10 +79,9 @@ impl Whisper {
         file_name: T,
         callback: impl Fn(&str) -> (),
     ) -> Result<()> {
-        let file = File::open(file_name)
-            .map_err(|e| emix::Error::from_std_error(e))?;
-        let source = Decoder::new(BufReader::new(file))
-            .map_err(|e| emix::Error::from_std_error(e))?;
+        let file = File::open(file_name).map_err(|e| emix::Error::from_std_error(e))?;
+        let source =
+            Decoder::new(BufReader::new(file)).map_err(|e| emix::Error::from_std_error(e))?;
         let mut transcription = self.model.transcribe(source);
 
         while let Some(result) = transcription.next().await {
@@ -98,10 +96,9 @@ impl Whisper {
         file_name: T,
         _sender: UnboundedSender<Segment>,
     ) -> Result<()> {
-        let file = File::open(file_name)
-            .map_err(|e| emix::Error::from_std_error(e))?;
-        let source = Decoder::new(BufReader::new(file))
-            .map_err(|e| emix::Error::from_std_error(e))?;
+        let file = File::open(file_name).map_err(|e| emix::Error::from_std_error(e))?;
+        let source =
+            Decoder::new(BufReader::new(file)).map_err(|e| emix::Error::from_std_error(e))?;
         // Note: transcribe method may not support the sender parameter in this version
         // This may need API-specific handling
         let _ = self.model.transcribe(source);

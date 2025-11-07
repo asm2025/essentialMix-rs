@@ -8,26 +8,8 @@ authors.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0"
-dotenvy = "0"
-humantime = "2"
-image = "0.24.9"
-kalosm = { version = "0", features = ["bert", "llama", "anthropic", "openai", "remote"], optional = true }
-kalosm-language = { version = "0", features = ["bert", "llama", "anthropic", "openai", "remote"], optional = true }
-lazy_static = "1"
-log = "0"
-rand = "0"
-reqwest = { version = "0", features = ["json"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 tokio = { version = "1", features = ["full"] }
-futures = "0"
-
-emix = { workspace = true, features = ["full"] }
-emixai = { workspace = true, features = ["full"] }
-emixlog = { workspace = true, features = ["full"] }
-emixnet = { workspace = true, features = ["full"] }
-emixthreading = { workspace = true }
+emixcore = { workspace = true }
 
 [workspace]
 members = [
@@ -37,7 +19,9 @@ members = [
 	"crates/log",
 	"crates/net",
 	"crates/threading",
-	"crates/db",
+	"crates/db/common",
+	"crates/db/seaorm",
+	"crates/db/diesel",
 ]
 
 [workspace.package]
@@ -53,7 +37,9 @@ emixcore = { path = "crates/core" }
 emixlog = { path = "crates/log" }
 emixnet = { path = "crates/net" }
 emixthreading = { path = "crates/threading" }
-emixdb = { path = "crates/db" }
+emixdb = { path = "crates/db/common" }
+emixseaorm = { path = "crates/db/seaorm" }
+emixdiesel = { path = "crates/db/diesel" }
 parking_lot = "0"
 
 [profile.dist]

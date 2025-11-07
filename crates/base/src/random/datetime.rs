@@ -1,5 +1,5 @@
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
-use fake::{faker::chrono::raw as f_chrono, locales, Fake};
+use fake::{Fake, faker::chrono::raw as f_chrono, locales};
 
 pub fn naive() -> NaiveDateTime {
     f_chrono::DateTime(locales::EN).fake()

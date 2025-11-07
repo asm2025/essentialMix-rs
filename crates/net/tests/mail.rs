@@ -43,11 +43,7 @@ mod tests {
     #[cfg(feature = "mail")]
     fn test_tempmail_new() {
         // Test TempMail::new()
-        let email = TempMail::new(
-            TempMailProvider::Tempmail,
-            "testuser",
-            "tempmail.io",
-        );
+        let email = TempMail::new(TempMailProvider::Tempmail, "testuser", "tempmail.io");
         assert_eq!(email.username(), "testuser");
         assert_eq!(email.domain(), "tempmail.io");
         assert_eq!(email.address(), "testuser@tempmail.io");
@@ -57,10 +53,7 @@ mod tests {
     #[cfg(feature = "mail")]
     fn test_tempmail_parse() {
         // Test TempMail::parse()
-        let email = TempMail::parse(
-            TempMailProvider::Tempmail,
-            "testuser@tempmail.io",
-        );
+        let email = TempMail::parse(TempMailProvider::Tempmail, "testuser@tempmail.io");
         assert_eq!(email.username(), "testuser");
         assert_eq!(email.domain(), "tempmail.io");
         assert_eq!(email.address(), "testuser@tempmail.io");
@@ -73,13 +66,16 @@ mod tests {
         let test_cases = vec![
             ("user@domain.com", TempMailProvider::Tempmail),
             ("test.email@example.org", TempMailProvider::EmailFake),
-            ("a@b.net", TempMailProvider::SecMail(SecMailDomain::SecMailCom)),
+            (
+                "a@b.net",
+                TempMailProvider::SecMail(SecMailDomain::SecMailCom),
+            ),
         ];
 
         for (email_str, provider) in test_cases {
             let email = TempMail::parse(provider, email_str);
             assert_eq!(email.address(), email_str);
-            
+
             let parts: Vec<&str> = email_str.split('@').collect();
             assert_eq!(email.username(), parts[0]);
             assert_eq!(email.domain(), parts[1]);
@@ -90,13 +86,9 @@ mod tests {
     #[cfg(feature = "mail")]
     fn test_tempmail_from() {
         // Test TempMail::from()
-        let original = TempMail::new(
-            TempMailProvider::EmailFake,
-            "original",
-            "test.com",
-        );
+        let original = TempMail::new(TempMailProvider::EmailFake, "original", "test.com");
         let cloned = TempMail::from(&original);
-        
+
         assert_eq!(cloned.username(), original.username());
         assert_eq!(cloned.domain(), original.domain());
         assert_eq!(cloned.address(), original.address());
@@ -106,11 +98,7 @@ mod tests {
     #[cfg(feature = "mail")]
     fn test_tempmail_address_formatting() {
         // Test address() method formatting
-        let email = TempMail::new(
-            TempMailProvider::Tempmail,
-            "user",
-            "domain.com",
-        );
+        let email = TempMail::new(TempMailProvider::Tempmail, "user", "domain.com");
         let address = email.address();
         assert!(address.contains('@'));
         assert!(address.starts_with("user"));
@@ -149,7 +137,10 @@ mod tests {
                 Ok(())
             }
             Err(e) => {
-                println!("EmailFake generation failed (this is ok for tests): {:?}", e);
+                println!(
+                    "EmailFake generation failed (this is ok for tests): {:?}",
+                    e
+                );
                 Ok(()) // Don't fail tests if external service is unavailable
             }
         }
@@ -196,7 +187,10 @@ mod tests {
                 Ok(())
             }
             Err(e) => {
-                println!("Random email generation failed (this is ok for tests): {:?}", e);
+                println!(
+                    "Random email generation failed (this is ok for tests): {:?}",
+                    e
+                );
                 Ok(()) // Don't fail tests if external service is unavailable
             }
         }
@@ -229,4 +223,3 @@ mod tests {
         println!("Mail feature is disabled - tests skipped");
     }
 }
-

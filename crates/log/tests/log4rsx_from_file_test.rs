@@ -31,4 +31,3 @@ fn test_log4rs_from_file() -> Result<()> {
 
     Ok(())
 }
-

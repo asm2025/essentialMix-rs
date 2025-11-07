@@ -20,9 +20,8 @@ mod tests {
     fn test_num_cpus() {
         let cpus = system::num_cpus();
         assert!(cpus > 0, "Should have at least 1 CPU");
-        
+
         // If debug is set, it should return 1
         // But we can't easily test this without setting debug mode
     }
 }
-

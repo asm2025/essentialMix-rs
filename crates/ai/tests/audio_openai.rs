@@ -126,7 +126,7 @@ mod tests {
         // This test doesn't require an API key - just test that file not found returns an error
         let result = whisper.transcribe_async(&nonexistent, |_| {}).await;
         assert!(result.is_err(), "Should fail on non-existent file");
-        
+
         Ok(())
     }
 
@@ -154,7 +154,7 @@ mod tests {
     #[test]
     fn test_openai_audio_source_display() {
         use emixai::audio::OpenAiAudioSource;
-        
+
         assert_eq!(OpenAiAudioSource::whisper_1.to_string(), "whisper-1");
         assert_eq!(OpenAiAudioSource::default().to_string(), "whisper-1");
     }
@@ -162,7 +162,7 @@ mod tests {
     #[test]
     fn test_openai_audio_source_default() {
         use emixai::audio::OpenAiAudioSource;
-        
+
         assert_eq!(OpenAiAudioSource::default(), OpenAiAudioSource::whisper_1);
     }
 }

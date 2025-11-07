@@ -6,15 +6,15 @@ mod tests {
     use emixnet::vpn::*;
 
     #[cfg(feature = "vpn")]
-    use std::sync::atomic::{AtomicBool, Ordering};
-    #[cfg(feature = "vpn")]
     use std::env;
+    #[cfg(feature = "vpn")]
+    use std::sync::atomic::{AtomicBool, Ordering};
 
     // Environment variable to enable/disable ExpressVPN tests
     // Set EXPRESSVPN_TESTS=1 to enable actual ExpressVPN tests
     #[cfg(feature = "vpn")]
     static EXPRESSVPN_TESTS_ENABLED: AtomicBool = AtomicBool::new(false);
-    
+
     #[cfg(feature = "vpn")]
     fn are_expressvpn_tests_enabled() -> bool {
         // Check environment variable
@@ -72,10 +72,7 @@ mod tests {
     #[cfg(feature = "vpn")]
     fn check_expressvpn_installed() -> bool {
         use std::process::Command;
-        Command::new("expressvpn")
-            .arg("--version")
-            .output()
-            .is_ok()
+        Command::new("expressvpn").arg("--version").output().is_ok()
     }
 
     #[tokio::test]
@@ -154,7 +151,7 @@ mod tests {
         }
 
         let vpn = ExpressVPN;
-        
+
         // Test list() function
         match vpn.list() {
             Ok(locations) => {
@@ -185,7 +182,7 @@ mod tests {
         }
 
         let vpn = ExpressVPN;
-        
+
         // Test recommended() function
         match vpn.recommended() {
             Ok(locations) => {
@@ -216,7 +213,7 @@ mod tests {
         }
 
         let vpn = ExpressVPN;
-        
+
         // Test recent() function
         match vpn.recent() {
             Ok(locations) => {

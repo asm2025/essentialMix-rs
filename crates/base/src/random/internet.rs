@@ -1,6 +1,7 @@
 use fake::{
+    Fake,
     faker::{filesystem::raw as f_filesystem, http::raw as f_http, internet::raw as f_internet},
-    locales, Fake,
+    locales,
 };
 use randua;
 use randua::UserAgent;

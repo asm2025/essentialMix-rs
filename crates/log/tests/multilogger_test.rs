@@ -1,5 +1,5 @@
 use emixlog::{LogLevel, MultiLogger};
-use log::{Log, Level, LevelFilter, Metadata, Record};
+use log::{Level, LevelFilter, Log, Metadata, Record};
 use std::sync::Arc;
 
 struct TestLogger {
@@ -175,7 +175,7 @@ fn test_init_empty_logger_error() {
     let empty_logger = MultiLogger::new();
     let result = empty_logger.init_with_level(LogLevel::Info);
     assert!(result.is_err());
-    
+
     // Verify it's an InvalidInput error
     if let Err(e) = result {
         match e {
@@ -193,10 +193,10 @@ fn test_init_with_level_valid() {
     // In that case, we just verify the method can be called.
     let logger = TestLogger::new(LevelFilter::Info);
     let multi_logger = MultiLogger::with_logger(Box::new(logger));
-    
+
     // Try to initialize - may fail if logger already set, which is ok
     let result = multi_logger.try_init_with_level(LogLevel::Debug);
-    
+
     // If successful, verify logging works through the global logger
     if result.is_ok() {
         log::info!("test message from global logger");
@@ -207,4 +207,3 @@ fn test_init_with_level_valid() {
     }
     // If it failed (logger already set), that's also fine - means another test set it
 }
-
