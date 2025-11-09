@@ -1,7 +1,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "emixdiesel"
-description = "emix-diesel is a Rust library that has some basic utility functions and components for Diesel ORM."
+description = "Async Diesel repositories, filters, and migrations aligned with EssentialMix patterns."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

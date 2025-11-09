@@ -6,12 +6,18 @@ A comprehensive Rust library workspace containing multiple utility crates for co
 
 This is a Cargo workspace containing the following crates:
 
-- **emix** (`crates/base`) - Core utility functions and components
-- **emixai** (`crates/ai`) - AI-related utilities (audio, imaging, language, vision)
-- **emixcore** (`crates/core`) - Core error handling and system utilities
-- **emixlog** (`crates/log`) - Logging utilities
-- **emixnet** (`crates/net`) - Networking utilities (VPN, web, mail)
-- **emixthreading** (`crates/threading`) - Threading and concurrency utilities
+- **emixcore** (`crates/core`) – shared error types, debug flag, and traits
+- **emix** (`crates/base`) – core utility functions and components
+- **emixai** (`crates/ai`) – AI-focused helpers (audio, imaging, language, vision)
+- **emixdb** (`crates/db/common`) – shared DTOs for database abstractions
+- **emixdiesel** (`crates/db/diesel`) – async Diesel repositories and helpers
+- **emixseaorm** (`crates/db/seaorm`) – SeaORM repositories and filters
+- **emixlog** (`crates/log`) – logging utilities and adapters
+- **emixnet** (`crates/net`) – networking utilities (VPN, web, mail)
+- **emixthreading** (`crates/threading`) – threading and concurrency utilities
+
+Each crate has a dedicated `README.md` under its directory with feature notes and
+usage examples.
 
 ## Building
 

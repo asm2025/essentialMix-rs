@@ -1,6 +1,6 @@
 [package]
 name = "emixdb"
-description = "emixdb is a Rust library providing common types and traits for database ORM abstractions"
+description = "DTOs, pagination, and merge traits shared across EssentialMix database crates."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

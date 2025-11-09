@@ -1,7 +1,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "emixai"
-description = "emixai is a Rust library that has some basic utility functions and components."
+description = "Feature-gated AI helpers (audio, imaging, language, vision) for EssentialMix."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

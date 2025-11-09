@@ -1,7 +1,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "emixnet"
-description = "emixnet is a Rust library that has some basic utility functions and components."
+description = "Higher-level HTTP, mail, and VPN helpers layered on EssentialMix core utilities."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
