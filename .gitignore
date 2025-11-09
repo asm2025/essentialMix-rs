@@ -3,6 +3,7 @@
 cargo.lock
 
 _logs
+_logs_test
 logs
 *.log
 /out

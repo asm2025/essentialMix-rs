@@ -9,10 +9,7 @@ pub mod image;
 pub mod image_tag;
 pub mod tag;
 
-// Re-export tables
-pub use tables::*;
-
 // Re-export models and DTOs
 pub use image::{CreateImageDto, ImageModel, NewImageModel, UpdateImageDto, UpdateImageModel};
-pub use image_tag::{ImageTagModel, NewImageTagModel};
+pub use image_tag::NewImageTagModel;
 pub use tag::{CreateTagDto, NewTagModel, TagModel, UpdateTagDto, UpdateTagModel};

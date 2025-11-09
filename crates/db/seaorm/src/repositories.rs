@@ -1,12 +1,14 @@
-pub use emixdb::repositories::*;
-
 use async_trait::async_trait;
 use sea_orm::{
     Condition, DatabaseConnection, DatabaseTransaction, EntityTrait, PrimaryKeyTrait, QueryFilter,
     Select, SelectTwoMany,
 };
 
-use crate::{Result, schema::Merge};
+use crate::{
+    Result,
+    dto::{ModelWithRelated, Pagination, ResultSet},
+    models::Merge,
+};
 
 pub struct ClosureFilter<F>
 where
@@ -100,6 +102,13 @@ pub trait IHasDatabase {
     async fn begin_transaction(&self) -> Result<DatabaseTransaction>;
 }
 
+/// Base repository trait for CRUD operations.
+///
+/// # Debugging
+/// Deriving `Debug` for types that hold an `Arc<dyn IRepository<...>>` (or any trait inheriting
+/// from `IRepository`) will trigger recursive trait object formatting and can cause a stack
+/// overflow when debugging the crate. If you must derive `Debug`, ensure the stack size is
+/// increased (for example, via `RUST_MIN_STACK`) in the environment where debugging occurs.
 #[async_trait]
 pub trait IRepository<E, U>: IHasDatabase
 where
@@ -129,6 +138,14 @@ where
     ) -> Result<()>;
 }
 
+/// Extended repository trait for entities with relationships.
+///
+/// # Debugging
+/// Deriving `Debug` for types that hold an `Arc<dyn IRepositoryWithRelated<...>>` (or any trait
+/// inheriting from `IRepositoryWithRelated`) will trigger recursive trait object formatting and
+/// can cause a stack overflow when debugging the crate. If you must derive `Debug`, ensure the
+/// stack size is increased (for example, via `RUST_MIN_STACK`) in the environment where debugging
+/// occurs.
 #[async_trait]
 pub trait IRepositoryWithRelated<E, U, R>: IRepository<E, U>
 where

@@ -1,61 +1,197 @@
-// Example usage of emix-diesel
+// Example usage of emixdiesel
 // This file demonstrates how to use the repository implementations
+// with proper connection pooling for SQLite, PostgreSQL, and MySQL
 
-// Note: This is a placeholder example file.
-// In a real application, you would set up your database connection,
-// initialize repositories, and use them for CRUD operations.
-
-// Example structure:
-#[allow(dead_code)]
+mod models;
 mod repositories;
-#[allow(dead_code)]
-mod schema;
 
-fn main() {
-    println!("emix-diesel example");
-    println!("See the README.md and individual example files for usage patterns.");
-    println!("");
-    println!("Key files:");
-    println!("  - examples/schema/image.rs - Image entity definition");
-    println!("  - examples/schema/tag.rs - Tag entity definition");
-    println!("  - examples/schema/image_tag.rs - Junction table definition");
-    println!("  - examples/repositories/image_repository.rs - Image repository implementation");
-    println!("  - examples/repositories/tag_repository.rs - Tag repository implementation");
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+use diesel_async::pooled_connection::deadpool::Pool;
+use emixdb::dto::Pagination;
+use models::*;
+use repositories::*;
+
+// Connection type based on feature
+// Note: SQLite doesn't support true async, so we use SyncConnectionWrapper
+#[cfg(feature = "sqlite")]
+type Connection =
+    diesel_async::sync_connection_wrapper::SyncConnectionWrapper<diesel::SqliteConnection>;
+
+#[cfg(feature = "postgres")]
+type Connection = diesel_async::AsyncPgConnection;
+
+#[cfg(feature = "mysql")]
+type Connection = diesel_async::AsyncMysqlConnection;
+
+/// Create a connection pool
+async fn create_pool(database_url: &str) -> Pool<Connection> {
+    let config = AsyncDieselConnectionManager::<Connection>::new(database_url);
+    Pool::builder(config)
+        .build()
+        .expect("Failed to create connection pool")
 }
 
-// Example usage (commented out as it requires a database connection):
-/*
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    use diesel_async::AsyncSqliteConnection;
-    use emixdiesel::prelude::*;
+    // Load environment variables from .env file
+    dotenvy::dotenv().ok();
 
-    // Connect to database
-    let conn = AsyncSqliteConnection::establish("database.db").await?;
+    // Get database URL from environment
+    let database_url =
+        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
 
-    // Create repository
-    let image_repo = ImageRepository::new(conn);
+    println!("=== emixdiesel Example ===\n");
+    println!("Database backend: {}", get_backend_name());
+    println!("Database URL: {}\n", database_url);
 
-    // List images with pagination
-    let images = image_repo.list(
-        None,
-        Some(Pagination { page: 1, page_size: 10 })
-    ).await?;
+    // Create connection pool
+    let pool = create_pool(&database_url).await;
 
-    println!("Found {} images", images.total);
-    for image in images.data {
-        println!("  - {} ({})", image.title, image.id);
-    }
+    // Create repositories
+    let image_repo = ImageRepository::new(pool.clone());
+    let tag_repo = TagRepository::new(pool.clone());
 
-    // Get image with tags
-    if let Some(image_with_tags) = image_repo.get_with_related(1).await? {
-        println!("\nImage: {}", image_with_tags.item.title);
+    // Example 1: Create some tags
+    println!("--- Creating Tags ---");
+    let tag1 = tag_repo
+        .create(CreateTagDto {
+            name: "Nature".to_string(),
+        })
+        .await?;
+    println!("Created tag: {} (ID: {})", tag1.name, tag1.id);
+
+    let tag2 = tag_repo
+        .create(CreateTagDto {
+            name: "Landscape".to_string(),
+        })
+        .await?;
+    println!("Created tag: {} (ID: {})", tag2.name, tag2.id);
+
+    // Example 2: Create an image with tags
+    println!("\n--- Creating Image with Tags ---");
+    let image = image_repo
+        .create_with_tags(CreateImageDto {
+            title: "Mountain Sunset".to_string(),
+            description: Some("A beautiful sunset over the mountains".to_string()),
+            extension: "jpg".to_string(),
+            file_size: 2048576,
+            mime_type: "image/jpeg".to_string(),
+            width: Some(1920),
+            height: Some(1080),
+            alt_text: Some("Sunset view".to_string()),
+            tags: Some("Nature,Landscape".to_string()),
+        })
+        .await?;
+    println!("Created image: {} (ID: {})", image.title, image.id);
+
+    // Example 3: Get image with tags
+    println!("\n--- Getting Image with Tags ---");
+    if let Some(image_with_tags) = image_repo.get_with_tags(image.id).await? {
+        println!("Image: {}", image_with_tags.item.title);
         println!("Tags:");
-        for tag in image_with_tags.related {
+        for tag in &image_with_tags.related {
             println!("  - {}", tag.name);
         }
     }
 
+    // Example 4: List all images with pagination
+    println!("\n--- Listing Images (Paginated) ---");
+    let images = image_repo
+        .list(Some(Pagination {
+            page: 1,
+            page_size: 10,
+        }))
+        .await?;
+    println!("Found {} total images", images.total);
+    for img in images.data {
+        println!("  - {} ({})", img.title, img.id);
+    }
+
+    // Example 5: List all tags with their images
+    println!("\n--- Listing Tags with Images ---");
+    let tags_with_images = tag_repo
+        .list_with_images(Some(Pagination {
+            page: 1,
+            page_size: 10,
+        }))
+        .await?;
+    println!("Found {} total tags", tags_with_images.total);
+    for tag_with_images in tags_with_images.data {
+        println!("Tag: {}", tag_with_images.item.name);
+        if !tag_with_images.related.is_empty() {
+            println!("  Images:");
+            for img in &tag_with_images.related {
+                println!("    - {}", img.title);
+            }
+        }
+    }
+
+    // Example 6: Update an image
+    println!("\n--- Updating Image ---");
+    let updated_image = image_repo
+        .update(
+            image.id,
+            UpdateImageDto {
+                title: Some("Beautiful Mountain Sunset".to_string()),
+                description: None,
+                extension: None,
+                file_size: None,
+                mime_type: None,
+                width: None,
+                height: None,
+                alt_text: Some("Beautiful sunset over mountain peaks".to_string()),
+            },
+        )
+        .await?;
+    println!("Updated image title to: {}", updated_image.title);
+
+    // Example 7: Add another tag to the image
+    println!("\n--- Adding Tag to Image ---");
+    let tag3 = tag_repo
+        .create(CreateTagDto {
+            name: "Photography".to_string(),
+        })
+        .await?;
+    image_repo.add_tag(image.id, tag3.id).await?;
+    println!(
+        "Added tag '{}' to image '{}'",
+        tag3.name, updated_image.title
+    );
+
+    // Example 8: Count records
+    println!("\n--- Counting Records ---");
+    let image_count = image_repo.count().await?;
+    let tag_count = tag_repo.count().await?;
+    println!("Total images: {}", image_count);
+    println!("Total tags: {}", tag_count);
+
+    // Example 9: Get tag by name
+    println!("\n--- Getting Tag by Name ---");
+    if let Some(nature_tag) = tag_repo.get_by_name("Nature").await? {
+        println!("Found tag: {} (ID: {})", nature_tag.name, nature_tag.id);
+    }
+
+    // Example 10: Clean up - delete the created data
+    println!("\n--- Cleanup ---");
+    image_repo.delete(image.id).await?;
+    println!("Deleted image: {}", updated_image.title);
+
+    tag_repo.delete(tag1.id).await?;
+    tag_repo.delete(tag2.id).await?;
+    tag_repo.delete(tag3.id).await?;
+    println!("Deleted all tags");
+
+    println!("\n=== Example completed successfully! ===");
     Ok(())
 }
-*/
+
+fn get_backend_name() -> &'static str {
+    #[cfg(feature = "sqlite")]
+    return "SQLite";
+
+    #[cfg(feature = "postgres")]
+    return "PostgreSQL";
+
+    #[cfg(feature = "mysql")]
+    return "MySQL";
+}

@@ -1,5 +1,5 @@
-// Example repository implementation using emixdb
-// This file demonstrates how to use the emixdb crate to create repository implementations
+// Example repository implementation using emixseaorm
+// This file demonstrates how to use the emixseaorm crate to create repository implementations
 
 use async_trait::async_trait;
 use sea_orm::{
@@ -11,11 +11,11 @@ use emixdb::{
     prelude::{sea_query::OnConflict, *},
 };
 
-// In a real implementation, you would import your schema entities from your own crate
-// For this example, we assume the schema entities are available in scope
-// Replace these with your actual schema imports:
-// use your_crate::schema::*;
-use crate::schema::*;
+// In a real implementation, you would import your models from your own crate
+// For this example, we assume the models are available in scope
+// Replace these with your actual models imports:
+// use your_crate::models::*;
+use crate::models::*;
 
 #[async_trait]
 pub trait ITagRepository: IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> {

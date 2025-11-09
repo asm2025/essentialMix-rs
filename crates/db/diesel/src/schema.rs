@@ -1,1 +1,0 @@
-pub use emixdb::schema::*;

@@ -1,2 +1,2 @@
-pub mod repositories;
-pub mod schema;
+pub mod dto;
+pub mod models;

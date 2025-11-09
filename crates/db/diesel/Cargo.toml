@@ -10,15 +10,31 @@ authors.workspace = true
 [dependencies]
 emixcore = { workspace = true }
 emixdb = { workspace = true }
-async-trait = "0"
-chrono = { version = "0", features = ["serde"] }
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-diesel = { version = "2", features = ["sqlite", "postgres", "r2d2", "chrono", "returning_clauses_for_sqlite_3_35"] }
-diesel-async = { version = "0", features = ["sqlite", "postgres", "sync-connection-wrapper"] }
+diesel = { version = "2.2", features = ["chrono"] }
+diesel-async = { version = "0.5", features = ["deadpool"] }
+dotenvy = "0.15"
+libsqlite3-sys = { version = "0.30", features = ["bundled"], optional = true }
+pq-sys = { version = "0.6", features = ["bundled"], optional = true }
+openssl-sys = { version = "0.9.100", features = ["vendored"], optional = true } 
+mysqlclient-sys = { version = "0.4", features = ["bundled"], optional = true }
 
 [dev-dependencies]
-serde_json = "1"
-libsqlite3-sys = { version = "0.30", features = ["bundled"] }
+tokio = { version = "1", features = ["full"] }
+diesel_migrations = "2.2"
+
+[features]
+default = ["sqlite-bundled"]
+sqlite = ["diesel/sqlite", "diesel/returning_clauses_for_sqlite_3_35", "diesel-async/sqlite", "diesel-async/deadpool"]
+sqlite-bundled = ["sqlite", "dep:libsqlite3-sys"]
+postgres = ["diesel/postgres", "diesel-async/postgres", "diesel-async/deadpool"]
+postgres-bundled = ["postgres", "dep:pq-sys", "dep:openssl-sys"]
+mysql = ["diesel/mysql", "diesel-async/mysql", "diesel-async/deadpool"]
+mysql-bundled = ["mysql", "dep:mysqlclient-sys"]
+full = ["sqlite", "postgres", "mysql"]
+full-bundled = ["sqlite-bundled", "postgres-bundled", "mysql-bundled"]
 
 [package.metadata.scripts]
 run = "cargo run"

@@ -46,4 +46,3 @@ pub use ActiveModel as ImageTagModelDto;
 pub use Column as ImageTagColumn;
 pub use Entity as ImageTagEntity;
 pub use Model as ImageTagModel;
-

@@ -1,16 +1,16 @@
-pub use emixdb::repositories::*;
-
 use async_trait::async_trait;
 use diesel_async::AsyncConnection;
 
-use crate::Result;
+use crate::{
+    Result,
+    dto::{ModelWithRelated, Pagination, ResultSet},
+};
 
 pub struct ClosureFilter<F, T>
 where
     F: Fn(T) -> T,
 {
     filter: F,
-    _phantom: std::marker::PhantomData<T>,
 }
 
 impl<F, T> ClosureFilter<F, T>
@@ -18,10 +18,7 @@ where
     F: Fn(T) -> T,
 {
     pub fn new(filter: F) -> Self {
-        Self {
-            filter,
-            _phantom: std::marker::PhantomData,
-        }
+        Self { filter }
     }
 }
 
@@ -63,6 +60,13 @@ where
 /// - `U`: The update DTO type
 /// - `I`: The ID type (e.g., `i64`)
 /// - `Conn`: The connection type (e.g., `AsyncSqliteConnection`)
+///
+/// # Debugging
+/// Deriving `Debug` for types that hold an `Arc<dyn IRepository<...>>` (or any trait inheriting
+/// from `IRepository`) triggers recursive trait object formatting and can cause a stack overflow
+/// when debugging the crate. If you must derive `Debug`, increase the stack size (for example, set
+/// `RUST_MIN_STACK`) at least temporarily or within the development environment used for
+/// debugging.
 #[async_trait]
 pub trait IRepository<M, U, I, Conn>: IHasConnection<Conn>
 where
@@ -100,6 +104,13 @@ where
 /// - `R`: The related model type
 /// - `I`: The ID type
 /// - `Conn`: The connection type
+///
+/// # Debugging
+/// Deriving `Debug` for types that hold an `Arc<dyn IRepositoryWithRelated<...>>` (or any trait
+/// inheriting from `IRepositoryWithRelated`) triggers recursive trait object formatting and can
+/// cause a stack overflow when debugging the crate. If you must derive `Debug`, increase the stack
+/// size (for example, set `RUST_MIN_STACK`) at least temporarily or within the development
+/// environment used for debugging.
 #[async_trait]
 pub trait IRepositoryWithRelated<M, U, R, I, Conn>: IRepository<M, U, I, Conn>
 where

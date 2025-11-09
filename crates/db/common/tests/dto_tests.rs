@@ -1,4 +1,4 @@
-use emixdb::repositories::*;
+use emixdb::dto::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 

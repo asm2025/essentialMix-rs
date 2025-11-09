@@ -1,4 +1,4 @@
-use emixdb::schema::*;
+use emixdb::models::Merge;
 
 #[derive(Debug, Clone, PartialEq)]
 struct User {

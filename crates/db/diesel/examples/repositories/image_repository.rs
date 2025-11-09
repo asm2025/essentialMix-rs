@@ -1,78 +1,120 @@
-// Example repository implementation using emix-diesel
-// This file demonstrates how to use the emix-diesel crate to create repository implementations
+// Example repository implementation using emixdiesel
+// This file demonstrates how to use the emixdiesel crate to create repository implementations
+// with proper connection pooling for production use
 
 use async_trait::async_trait;
-use diesel::{delete, insert_into, update};
+use diesel::prelude::*;
+use diesel_async::pooled_connection::deadpool::Pool;
+use diesel_async::RunQueryDsl;
 
-use emixdiesel::{Error, Result, prelude::*, repositories::*};
+use emixdb::dto::*;
+use emixdiesel::{Error, Result};
 
-// In a real implementation, you would import your schema entities from your own crate
-// For this example, we assume the schema entities are available in scope
-// Replace these with your actual schema imports:
-// use your_crate::schema::*;
-use crate::schema::*;
+// Import models and their type aliases
+use crate::models::{
+    tables::*, CreateImageDto, ImageModel, NewImageModel, NewImageTagModel, NewTagModel,
+    TagModel, UpdateImageDto, UpdateImageModel,
+};
 
-// Type alias for connection (adjust based on your database)
-type DbConnection = diesel_async::AsyncPgConnection;
+// Import ID type aliases
+use crate::models::image::ImageId;
+use crate::models::tag::TagId;
 
-#[async_trait]
-pub trait IImageRepository:
-    IRepositoryWithRelated<ImageModel, UpdateImageDto, TagModel, i64, DbConnection>
-{
-    async fn create_with_tags(&self, model: CreateImageDto) -> Result<ImageModel>;
-    async fn list_tags(
-        &self,
-        id: i64,
-        pagination: Option<Pagination>,
-    ) -> Result<ResultSet<TagModel>>;
-    async fn add_tag(&self, id: i64, related_id: i64) -> Result<()>;
-    async fn remove_tag(&self, id: i64, related_id: i64) -> Result<u64>;
-    async fn add_tags(&self, id: i64, tags: Vec<i64>) -> Result<u64>;
-    async fn remove_tags(&self, id: i64, tags: Vec<i64>) -> Result<u64>;
-    async fn add_tags_from_str(&self, id: i64, tags: &str) -> Result<u64>;
-}
+// Type aliases for each database backend
+// Note: SQLite doesn't support true async, so we use SyncConnectionWrapper
+#[cfg(feature = "sqlite")]
+pub type DbConnection =
+    diesel_async::sync_connection_wrapper::SyncConnectionWrapper<diesel::SqliteConnection>;
 
+#[cfg(feature = "postgres")]
+pub type DbConnection = diesel_async::AsyncPgConnection;
+
+#[cfg(feature = "mysql")]
+pub type DbConnection = diesel_async::AsyncMysqlConnection;
+
+pub type DbPool = Pool<DbConnection>;
+
+/// Image repository with proper connection pooling
 pub struct ImageRepository {
-    conn: DbConnection,
+    pool: DbPool,
 }
 
 impl ImageRepository {
-    pub fn new(conn: DbConnection) -> Self {
-        Self { conn }
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
+    }
+
+    /// Helper to get a connection from the pool
+    async fn get_conn(
+        &self,
+    ) -> Result<diesel_async::pooled_connection::deadpool::Object<DbConnection>> {
+        self.pool.get().await.map_err(|e| Error::from_std_error(e))
     }
 }
 
 #[async_trait]
-impl IHasConnection<DbConnection> for ImageRepository {
-    #[allow(invalid_reference_casting)]
-    async fn connection(&self) -> Result<&mut DbConnection> {
-        // WARNING: This is a simplified example implementation!
-        // In a real application, you should use proper connection pooling with interior mutability
-        // (e.g., Arc<Mutex<DbConnection>> or a connection pool like deadpool/r2d2)
-        // This unsafe cast is only for demonstration purposes and should NOT be used in production
-        Ok(unsafe { &mut *((&self.conn) as *const _ as *mut _) })
-    }
+pub trait IImageRepository {
+    /// List all images with optional pagination
+    async fn list(&self, pagination: Option<Pagination>) -> Result<ResultSet<ImageModel>>;
 
-    async fn begin_transaction(&self) -> Result<&mut DbConnection> {
-        let conn = self.connection().await?;
-        conn.begin_test_transaction()
-            .await
-            .map_err(Error::from_std_error)?;
-        Ok(conn)
-    }
+    /// Count all images
+    async fn count(&self) -> Result<u64>;
+
+    /// Get a single image by ID
+    async fn get(&self, id: ImageId) -> Result<Option<ImageModel>>;
+
+    /// Create a new image
+    async fn create(&self, dto: CreateImageDto) -> Result<ImageModel>;
+
+    /// Update an image by ID
+    async fn update(&self, id: ImageId, dto: UpdateImageDto) -> Result<ImageModel>;
+
+    /// Delete an image by ID
+    async fn delete(&self, id: ImageId) -> Result<()>;
+
+    /// Get image with its tags
+    async fn get_with_tags(
+        &self,
+        id: ImageId,
+    ) -> Result<Option<ModelWithRelated<ImageModel, TagModel>>>;
+
+    /// List images with their tags
+    async fn list_with_tags(
+        &self,
+        pagination: Option<Pagination>,
+    ) -> Result<ResultSet<ModelWithRelated<ImageModel, TagModel>>>;
+
+    /// Create image with tags from comma-separated string
+    async fn create_with_tags(&self, dto: CreateImageDto) -> Result<ImageModel>;
+
+    /// Add a tag to an image
+    async fn add_tag(&self, image_id: ImageId, tag_id: TagId) -> Result<()>;
+
+    /// Remove a tag from an image
+    async fn remove_tag(&self, image_id: ImageId, tag_id: TagId) -> Result<u64>;
+
+    /// Add multiple tags to an image
+    async fn add_tags(&self, image_id: ImageId, tag_ids: Vec<TagId>) -> Result<u64>;
+
+    /// Remove multiple tags from an image
+    async fn remove_tags(&self, image_id: ImageId, tag_ids: Vec<TagId>) -> Result<u64>;
+
+    /// Add tags from comma-separated string
+    async fn add_tags_from_str(&self, image_id: ImageId, tags_str: &str) -> Result<u64>;
+
+    /// Delete all tags for an image
+    async fn delete_all_tags(&self, image_id: ImageId) -> Result<()>;
 }
 
 #[async_trait]
-impl IRepository<ImageModel, UpdateImageDto, i64, DbConnection> for ImageRepository {
+impl IImageRepository for ImageRepository {
     async fn list(&self, pagination: Option<Pagination>) -> Result<ResultSet<ImageModel>> {
-        use crate::schema::images;
-
-        let conn = self.connection().await?;
+        let mut conn = self.get_conn().await?;
 
         // Get total count
         let total = images::table
             .count()
-            .get_result::<i64>(conn)
+            .get_result::<i64>(&mut conn)
             .await
             .map_err(Error::from_std_error)? as u64;
 
@@ -84,7 +126,8 @@ impl IRepository<ImageModel, UpdateImageDto, i64, DbConnection> for ImageReposit
         }
 
         let data = query
-            .load::<ImageModel>(conn)
+            .select(ImageModel::as_select())
+            .load::<ImageModel>(&mut conn)
             .await
             .map_err(Error::from_std_error)?;
 
@@ -96,141 +139,129 @@ impl IRepository<ImageModel, UpdateImageDto, i64, DbConnection> for ImageReposit
     }
 
     async fn count(&self) -> Result<u64> {
-        use crate::schema::images;
-
-        let conn = self.connection().await?;
+        let mut conn = self.get_conn().await?;
         images::table
             .count()
-            .get_result::<i64>(conn)
+            .get_result::<i64>(&mut conn)
             .await
             .map(|c| c as u64)
             .map_err(Error::from_std_error)
     }
 
-    async fn get(&self, id: i64) -> Result<Option<ImageModel>> {
-        use crate::schema::images;
-
-        let conn = self.connection().await?;
+    async fn get(&self, id: ImageId) -> Result<Option<ImageModel>> {
+        let mut conn = self.get_conn().await?;
         images::table
             .find(id)
-            .first::<ImageModel>(conn)
+            .select(ImageModel::as_select())
+            .first::<ImageModel>(&mut conn)
             .await
             .optional()
             .map_err(Error::from_std_error)
     }
 
-    async fn create(&self, model: ImageModel) -> Result<ImageModel> {
-        use crate::schema::images;
+    async fn create(&self, dto: CreateImageDto) -> Result<ImageModel> {
+        let mut conn = self.get_conn().await?;
+        let new_model: NewImageModel = dto.into();
 
-        let conn = self.connection().await?;
-        let new_model = NewImageModel {
-            title: model.title,
-            description: model.description,
-            extension: model.extension,
-            file_size: model.file_size,
-            mime_type: model.mime_type,
-            width: model.width,
-            height: model.height,
-            alt_text: model.alt_text,
-            created_at: model.created_at,
-            updated_at: model.updated_at,
-        };
-
-        insert_into(images::table)
+        diesel::insert_into(images::table)
             .values(&new_model)
-            .get_result::<ImageModel>(conn)
+            .returning(ImageModel::as_returning())
+            .get_result::<ImageModel>(&mut conn)
             .await
             .map_err(Error::from_std_error)
     }
 
-    async fn update(&self, id: i64, model: UpdateImageDto) -> Result<ImageModel> {
-        use crate::schema::images;
+    async fn update(&self, id: ImageId, dto: UpdateImageDto) -> Result<ImageModel> {
+        let mut conn = self.get_conn().await?;
 
-        let conn = self.connection().await?;
-
-        // First, verify the image exists
+        // Verify the image exists
         let _existing = images::table
             .find(id)
-            .first::<ImageModel>(conn)
+            .select(ImageModel::as_select())
+            .first::<ImageModel>(&mut conn)
             .await
             .map_err(Error::from_std_error)?;
 
-        let mut update_model = UpdateImageModel {
-            title: None,
-            description: None,
-            extension: None,
-            file_size: None,
-            mime_type: None,
-            width: None,
-            height: None,
-            alt_text: None,
+        let update_model = UpdateImageModel {
+            title: dto.title,
+            description: dto.description,
+            extension: dto.extension,
+            file_size: dto.file_size,
+            mime_type: dto.mime_type,
+            width: dto.width,
+            height: dto.height,
+            alt_text: dto.alt_text,
             updated_at: chrono::Utc::now().naive_utc(),
         };
 
-        // Apply the updates from the DTO
-        if let Some(ref title) = model.title {
-            update_model.title = Some(title.clone());
-        }
-        if let Some(ref description) = model.description {
-            update_model.description = Some(description.clone());
-        }
-        if let Some(ref extension) = model.extension {
-            update_model.extension = Some(extension.clone());
-        }
-        if let Some(file_size) = model.file_size {
-            update_model.file_size = Some(file_size);
-        }
-        if let Some(ref mime_type) = model.mime_type {
-            update_model.mime_type = Some(mime_type.clone());
-        }
-        if let Some(width) = model.width {
-            update_model.width = Some(width);
-        }
-        if let Some(height) = model.height {
-            update_model.height = Some(height);
-        }
-        if let Some(ref alt_text) = model.alt_text {
-            update_model.alt_text = Some(alt_text.clone());
-        }
-
-        update(images::table.find(id))
+        diesel::update(images::table.find(id))
             .set(&update_model)
-            .get_result::<ImageModel>(conn)
+            .returning(ImageModel::as_returning())
+            .get_result::<ImageModel>(&mut conn)
             .await
             .map_err(Error::from_std_error)
     }
 
-    async fn delete(&self, id: i64) -> Result<()> {
-        use crate::schema::images;
+    async fn delete(&self, id: ImageId) -> Result<()> {
+        let mut conn = self.get_conn().await?;
 
-        let conn = self.connection().await?;
-        delete(images::table.find(id))
-            .execute(conn)
+        // Delete related tags first
+        diesel::delete(image_tags::table.filter(image_tags::image_id.eq(id)))
+            .execute(&mut conn)
+            .await
+            .map_err(Error::from_std_error)?;
+
+        // Delete the image
+        diesel::delete(images::table.find(id))
+            .execute(&mut conn)
             .await
             .map_err(Error::from_std_error)?;
 
         Ok(())
     }
-}
 
-#[async_trait]
-impl IRepositoryWithRelated<ImageModel, UpdateImageDto, TagModel, i64, DbConnection>
-    for ImageRepository
-{
-    async fn list_with_related(
+    async fn get_with_tags(
+        &self,
+        id: ImageId,
+    ) -> Result<Option<ModelWithRelated<ImageModel, TagModel>>> {
+        let mut conn = self.get_conn().await?;
+
+        let image = images::table
+            .find(id)
+            .select(ImageModel::as_select())
+            .first::<ImageModel>(&mut conn)
+            .await
+            .optional()
+            .map_err(Error::from_std_error)?;
+
+        let Some(image) = image else {
+            return Ok(None);
+        };
+
+        let related_tags = image_tags::table
+            .inner_join(tags::table)
+            .filter(image_tags::image_id.eq(id))
+            .select(TagModel::as_select())
+            .load::<TagModel>(&mut conn)
+            .await
+            .map_err(Error::from_std_error)?;
+
+        Ok(Some(ModelWithRelated {
+            item: image,
+            related: related_tags,
+        }))
+    }
+
+    async fn list_with_tags(
         &self,
         pagination: Option<Pagination>,
     ) -> Result<ResultSet<ModelWithRelated<ImageModel, TagModel>>> {
-        use crate::schema::image_tags;
-        use crate::schema::images;
-        use crate::schema::tags;
-
-        let conn = self.connection().await?;
+        let mut conn = self.get_conn().await?;
 
         // Get total count
         let total = images::table
             .count()
-            .get_result::<i64>(conn)
+            .get_result::<i64>(&mut conn)
             .await
             .map_err(Error::from_std_error)? as u64;
 
@@ -242,7 +273,8 @@ impl IRepositoryWithRelated<ImageModel, UpdateImageDto, TagModel, i64, DbConnect
         }
 
         let images_list = query
-            .load::<ImageModel>(conn)
+            .select(ImageModel::as_select())
+            .load::<ImageModel>(&mut conn)
             .await
             .map_err(Error::from_std_error)?;
 
@@ -253,7 +285,7 @@ impl IRepositoryWithRelated<ImageModel, UpdateImageDto, TagModel, i64, DbConnect
                 .inner_join(tags::table)
                 .filter(image_tags::image_id.eq(image.id))
                 .select(TagModel::as_select())
-                .load::<TagModel>(conn)
+                .load::<TagModel>(&mut conn)
                 .await
                 .map_err(Error::from_std_error)?;
 
@@ -270,203 +302,100 @@ impl IRepositoryWithRelated<ImageModel, UpdateImageDto, TagModel, i64, DbConnect
         })
     }
 
-    async fn get_with_related(
-        &self,
-        id: i64,
-    ) -> Result<Option<ModelWithRelated<ImageModel, TagModel>>> {
-        use crate::schema::image_tags;
-        use crate::schema::images;
-        use crate::schema::tags;
+    async fn create_with_tags(&self, dto: CreateImageDto) -> Result<ImageModel> {
+        let tags_str = dto.tags.clone();
+        let new_model: NewImageModel = dto.into();
 
-        let conn = self.connection().await?;
-        let image = images::table
-            .find(id)
-            .first::<ImageModel>(conn)
-            .await
-            .optional()
-            .map_err(Error::from_std_error)?;
+        let mut conn = self.get_conn().await?;
 
-        let Some(image) = image else {
-            return Ok(None);
-        };
-
-        let related_tags = image_tags::table
-            .inner_join(tags::table)
-            .filter(image_tags::image_id.eq(id))
-            .select(TagModel::as_select())
-            .load::<TagModel>(conn)
-            .await
-            .map_err(Error::from_std_error)?;
-
-        Ok(Some(ModelWithRelated {
-            item: image,
-            related: related_tags,
-        }))
-    }
-
-    async fn delete_related(&self, id: i64) -> Result<()> {
-        use crate::schema::image_tags;
-
-        let conn = self.connection().await?;
-        delete(image_tags::table.filter(image_tags::image_id.eq(id)))
-            .execute(conn)
-            .await
-            .map_err(Error::from_std_error)?;
-
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl IImageRepository for ImageRepository {
-    async fn create_with_tags(&self, model: CreateImageDto) -> Result<ImageModel> {
-        let tags = model.tags.clone();
-        let new_model: NewImageModel = model.into();
-
-        let conn = self.connection().await?;
-        let result = insert_into(images::table)
+        let result = diesel::insert_into(images::table)
             .values(&new_model)
-            .get_result::<ImageModel>(conn)
+            .returning(ImageModel::as_returning())
+            .get_result::<ImageModel>(&mut conn)
             .await
             .map_err(Error::from_std_error)?;
 
-        let Some(tags) = tags else {
-            return Ok(result);
-        };
+        if let Some(tags) = tags_str {
+            self.add_tags_from_str(result.id, &tags).await?;
+        }
 
-        self.add_tags_from_str(result.id, &tags).await?;
         Ok(result)
     }
 
-    async fn list_tags(
-        &self,
-        id: i64,
-        pagination: Option<Pagination>,
-    ) -> Result<ResultSet<TagModel>> {
-        use crate::schema::image_tags;
-        use crate::schema::tags;
+    async fn add_tag(&self, image_id: ImageId, tag_id: TagId) -> Result<()> {
+        let mut conn = self.get_conn().await?;
 
-        let conn = self.connection().await?;
+        let new_image_tag = NewImageTagModel { image_id, tag_id };
 
-        let total = tags::table
-            .inner_join(image_tags::table)
-            .filter(image_tags::image_id.eq(id))
-            .count()
-            .get_result::<i64>(conn)
-            .await
-            .map_err(Error::from_std_error)? as u64;
-
-        let mut query = tags::table
-            .inner_join(image_tags::table)
-            .filter(image_tags::image_id.eq(id))
-            .select(TagModel::as_select())
-            .into_boxed();
-
-        if let Some(p) = pagination {
-            let offset = ((p.page - 1) * p.page_size) as i64;
-            query = query.limit(p.page_size as i64).offset(offset);
-        }
-
-        let data = query
-            .load::<TagModel>(conn)
-            .await
-            .map_err(Error::from_std_error)?;
-
-        Ok(ResultSet {
-            data,
-            total,
-            pagination,
-        })
-    }
-
-    async fn add_tag(&self, id: i64, related_id: i64) -> Result<()> {
-        use crate::schema::image_tags;
-
-        let conn = self.connection().await?;
-        let new_image_tag = NewImageTagModel {
-            image_id: id,
-            tag_id: related_id,
-        };
-
-        insert_into(image_tags::table)
+        diesel::insert_into(image_tags::table)
             .values(&new_image_tag)
-            .execute(conn)
+            .execute(&mut conn)
             .await
             .map_err(Error::from_std_error)?;
 
         Ok(())
     }
 
-    async fn remove_tag(&self, id: i64, related_id: i64) -> Result<u64> {
-        use crate::schema::image_tags;
+    async fn remove_tag(&self, image_id: ImageId, tag_id: TagId) -> Result<u64> {
+        let mut conn = self.get_conn().await?;
 
-        let conn = self.connection().await?;
-        let rows_affected = delete(
+        let rows_affected = diesel::delete(
             image_tags::table
-                .filter(image_tags::image_id.eq(id))
-                .filter(image_tags::tag_id.eq(related_id)),
+                .filter(image_tags::image_id.eq(image_id))
+                .filter(image_tags::tag_id.eq(tag_id)),
         )
-        .execute(conn)
+        .execute(&mut conn)
         .await
         .map_err(Error::from_std_error)?;
 
         Ok(rows_affected as u64)
     }
 
-    async fn add_tags(&self, id: i64, tags: Vec<i64>) -> Result<u64> {
-        if tags.is_empty() {
+    async fn add_tags(&self, image_id: ImageId, tag_ids: Vec<TagId>) -> Result<u64> {
+        if tag_ids.is_empty() {
             return Ok(0);
         }
 
-        use crate::schema::image_tags;
-
-        let conn = self.connection().await?;
-
-        let mut rows_inserted: usize = 0;
-        for tag_id in tags {
-            let new_image_tag = NewImageTagModel {
-                image_id: id,
-                tag_id,
-            };
-
-            let result = insert_into(image_tags::table)
+        let mut conn = self.get_conn().await?;
+        
+        // SQLite doesn't support batch inserts, so we insert one at a time
+        let mut total_inserted = 0;
+        for tag_id in tag_ids {
+            let new_image_tag = NewImageTagModel { image_id, tag_id };
+            let rows = diesel::insert_into(image_tags::table)
                 .values(&new_image_tag)
-                .execute(conn)
+                .execute(&mut conn)
                 .await
                 .map_err(Error::from_std_error)?;
-
-            rows_inserted += result;
+            total_inserted += rows;
         }
 
-        Ok(rows_inserted as u64)
+        Ok(total_inserted as u64)
     }
 
-    async fn remove_tags(&self, id: i64, tags: Vec<i64>) -> Result<u64> {
-        if tags.is_empty() {
+    async fn remove_tags(&self, image_id: ImageId, tag_ids: Vec<TagId>) -> Result<u64> {
+        if tag_ids.is_empty() {
             return Ok(0);
         }
 
-        use crate::schema::image_tags;
+        let mut conn = self.get_conn().await?;
 
-        let conn = self.connection().await?;
-        let rows_affected = delete(
+        let rows_affected = diesel::delete(
             image_tags::table
-                .filter(image_tags::image_id.eq(id))
-                .filter(image_tags::tag_id.eq_any(tags)),
+                .filter(image_tags::image_id.eq(image_id))
+                .filter(image_tags::tag_id.eq_any(tag_ids)),
         )
-        .execute(conn)
+        .execute(&mut conn)
         .await
         .map_err(Error::from_std_error)?;
 
         Ok(rows_affected as u64)
     }
 
-    async fn add_tags_from_str(&self, id: i64, tags_str: &str) -> Result<u64> {
+    async fn add_tags_from_str(&self, image_id: ImageId, tags_str: &str) -> Result<u64> {
         if tags_str.is_empty() {
             return Ok(0);
         }
-
-        use crate::schema::tags;
 
         let tag_names: Vec<&str> = tags_str
             .split(',')
@@ -478,7 +407,7 @@ impl IImageRepository for ImageRepository {
             return Ok(0);
         }
 
-        let conn = self.connection().await?;
+        let mut conn = self.get_conn().await?;
 
         // Insert tags (ignore conflicts for existing tags)
         for &name in &tag_names {
@@ -486,9 +415,9 @@ impl IImageRepository for ImageRepository {
                 name: name.to_string(),
             };
 
-            let _ = insert_into(tags::table)
+            let _ = diesel::insert_into(tags::table)
                 .values(&new_tag)
-                .execute(conn)
+                .execute(&mut conn)
                 .await
                 .ok(); // Ignore errors from duplicate tags
         }
@@ -497,7 +426,7 @@ impl IImageRepository for ImageRepository {
         let tag_ids = tags::table
             .filter(tags::name.eq_any(&tag_names))
             .select(tags::id)
-            .load::<i64>(conn)
+            .load::<TagId>(&mut conn)
             .await
             .map_err(Error::from_std_error)?;
 
@@ -506,6 +435,17 @@ impl IImageRepository for ImageRepository {
         }
 
         // Add image-tag associations
-        self.add_tags(id, tag_ids).await
+        self.add_tags(image_id, tag_ids).await
+    }
+
+    async fn delete_all_tags(&self, image_id: ImageId) -> Result<()> {
+        let mut conn = self.get_conn().await?;
+
+        diesel::delete(image_tags::table.filter(image_tags::image_id.eq(image_id)))
+            .execute(&mut conn)
+            .await
+            .map_err(Error::from_std_error)?;
+
+        Ok(())
     }
 }

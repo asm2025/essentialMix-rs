@@ -1,20 +1,30 @@
-// Example schema implementation using emix-diesel
-// This file demonstrates how to use the emix-diesel crate to create Diesel models
+// Example schema implementation using emixdiesel
+// This file demonstrates how to use the emixdiesel crate to create Diesel models
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::tables::tags;
-use emixdiesel::schema::*;
+use emixdb::models::Merge;
+
+// Define the ID type based on the database backend
+#[cfg(feature = "sqlite")]
+pub type TagId = i32;
+
+#[cfg(feature = "postgres")]
+pub type TagId = i64;
+
+#[cfg(feature = "mysql")]
+pub type TagId = i64;
 
 // Example: Tag model
-#[derive(
-    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Queryable, Selectable, Identifiable,
-)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = tags)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+#[cfg_attr(feature = "sqlite", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
+#[cfg_attr(feature = "postgres", diesel(check_for_backend(diesel::pg::Pg)))]
+#[cfg_attr(feature = "mysql", diesel(check_for_backend(diesel::mysql::Mysql)))]
 pub struct TagModel {
-    pub id: i64,
+    pub id: TagId,
     pub name: String,
 }
 
@@ -59,6 +69,3 @@ impl Merge<UpdateTagModel> for UpdateTagDto {
     }
 }
 
-// Re-export table references for convenience
-pub use tags::dsl as tag_dsl;
-pub use tags::table as tags_table;

@@ -1,21 +1,32 @@
-// Example schema implementation using emix-diesel
-// This file demonstrates how to use the emix-diesel crate to create Diesel models
+// Example schema implementation using emixdiesel
+// This file demonstrates how to use the emixdiesel crate to create Diesel models
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::tables::images;
-use emixdiesel::schema::*;
+use emixdb::models::Merge;
+
+// Define the ID type based on the database backend
+#[cfg(feature = "sqlite")]
+pub type ImageId = i32;
+
+#[cfg(feature = "postgres")]
+pub type ImageId = i64;
+
+#[cfg(feature = "mysql")]
+pub type ImageId = i64;
 
 // Example: Image model
-#[derive(
-    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Queryable, Selectable, Identifiable,
-)]
+// Note: We use conditional compilation to specify which backend this model supports
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = images)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+#[cfg_attr(feature = "sqlite", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
+#[cfg_attr(feature = "postgres", diesel(check_for_backend(diesel::pg::Pg)))]
+#[cfg_attr(feature = "mysql", diesel(check_for_backend(diesel::mysql::Mysql)))]
 pub struct ImageModel {
-    pub id: i64,
+    pub id: ImageId,
     pub title: String,
     pub description: Option<String>,
     pub extension: String,
