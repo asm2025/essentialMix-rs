@@ -6,17 +6,11 @@ use crate::{
     dto::{ModelWithRelated, Pagination, ResultSet},
 };
 
-pub struct ClosureFilter<F, T>
-where
-    F: Fn(T) -> T,
-{
+pub struct ClosureFilter<F> {
     filter: F,
 }
 
-impl<F, T> ClosureFilter<F, T>
-where
-    F: Fn(T) -> T,
-{
+impl<F> ClosureFilter<F> {
     pub fn new(filter: F) -> Self {
         Self { filter }
     }
@@ -35,7 +29,7 @@ where
     }
 }
 
-impl<F, T> FilterQuery<T> for ClosureFilter<F, T>
+impl<F, T> FilterQuery<T> for ClosureFilter<F>
 where
     F: Fn(T) -> T,
 {

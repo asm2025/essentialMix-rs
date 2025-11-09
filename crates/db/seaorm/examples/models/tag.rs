@@ -4,7 +4,7 @@
 use sea_orm::{EntityTrait, NotSet, Set, prelude::*};
 use serde::{Deserialize, Serialize};
 
-use emixdb::schema::Merge;
+use emixdb::models::Merge;
 
 // Example: Tag entity
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
@@ -17,15 +17,12 @@ pub struct Model {
 }
 
 // In a real implementation, replace these with your actual module paths:
-// use super::image;
-// use super::image_tag;
-use crate::image;
-use crate::image_tag;
+use super::image;
+use super::image_tag;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "crate::image_tag::Entity")]
-    // In a real implementation, use: #[sea_orm(has_many = "super::image_tag::Entity")]
+    #[sea_orm(has_many = "super::image_tag::Entity")]
     ImageTag,
 }
 

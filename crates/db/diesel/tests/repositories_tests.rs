@@ -1,6 +1,6 @@
 use emixdiesel::repositories::*;
 
-// Test data structures
+// Test data structures for FilterQuery tests
 #[derive(Debug, Clone, PartialEq)]
 struct TestQuery {
     limit: Option<i32>,
@@ -166,3 +166,84 @@ fn test_phantom_data_size() {
     // PhantomData should have zero size
     assert_eq!(size_of::<std::marker::PhantomData<i32>>(), 0);
 }
+
+// ==================== Repository Trait Structure Tests ====================
+
+#[test]
+fn test_closure_filter_new() {
+    // Verify ClosureFilter can be constructed
+    let _filter = ClosureFilter::new(|x: i32| x + 1);
+}
+
+#[test]
+fn test_filter_query_trait_implemented_for_closures() {
+    // Verify that closures automatically implement FilterQuery
+    let filter = |query: TestQuery| query.with_limit(10);
+    let query = TestQuery::new();
+    
+    // The FilterQuery trait is implemented for Fn(T) -> T
+    let _ = FilterQuery::apply(&filter, query);
+}
+
+#[test]
+fn test_filter_query_trait_implemented_for_closure_filter() {
+    // Verify that ClosureFilter implements FilterQuery
+    let filter = ClosureFilter::new(|query: TestQuery| query.with_limit(10));
+    let query = TestQuery::new();
+    
+    let _ = FilterQuery::apply(&filter, query);
+}
+
+#[test]
+fn test_filter_composition() {
+    // Verify that filters can be composed
+    let filter1 = |query: TestQuery| query.with_limit(10);
+    let filter2 = |query: TestQuery| query.with_offset(5);
+    let filter3 = |query: TestQuery| query.with_filter_name("test".to_string());
+    
+    let query = TestQuery::new();
+    let query = FilterQuery::apply(&filter1, query);
+    let query = FilterQuery::apply(&filter2, query);
+    let query = FilterQuery::apply(&filter3, query);
+    
+    assert_eq!(query.limit, Some(10));
+    assert_eq!(query.offset, Some(5));
+    assert_eq!(query.filter_name, Some("test".to_string()));
+}
+
+#[test]
+fn test_closure_filter_with_state() {
+    // Verify that ClosureFilter can capture state
+    let default_limit = 42;
+    let filter = ClosureFilter::new(move |query: TestQuery| query.with_limit(default_limit));
+    
+    let query = TestQuery::new();
+    let result = FilterQuery::apply(&filter, query);
+    
+    assert_eq!(result.limit, Some(42));
+}
+
+#[test]
+fn test_filter_query_generic_over_query_type() {
+    // Verify that FilterQuery works with different query types
+    #[derive(Clone)]
+    struct OtherQuery {
+        value: i32,
+    }
+    
+    impl OtherQuery {
+        fn with_value(mut self, v: i32) -> Self {
+            self.value = v;
+            self
+        }
+    }
+    
+    let filter = ClosureFilter::new(|q: OtherQuery| q.with_value(100));
+    let query = OtherQuery { value: 0 };
+    let result = FilterQuery::apply(&filter, query);
+    
+    assert_eq!(result.value, 100);
+}
+
+// Note: Full repository tests with database operations are in the examples directory
+// These tests focus on the trait structure and filter functionality without requiring a database connection

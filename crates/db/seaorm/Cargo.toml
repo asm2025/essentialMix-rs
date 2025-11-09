@@ -11,12 +11,21 @@ authors.workspace = true
 emixcore = { workspace = true }
 emixdb = { workspace = true }
 async-trait = "0"
-chrono = "0"
+chrono = { version = "0", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+sea-orm = { version = "1", features = ["macros", "with-chrono"], default-features = false }
 
 [dev-dependencies]
+tokio = { version = "1", features = ["full"] }
 serde_json = "1"
+
+[features]
+default = ["sqlite"]
+sqlite = ["sea-orm/sqlx-sqlite", "sea-orm/runtime-tokio-rustls", "sea-orm/with-chrono"]
+postgres = ["sea-orm/sqlx-postgres", "sea-orm/runtime-tokio-rustls", "sea-orm/with-chrono"]
+mysql = ["sea-orm/sqlx-mysql", "sea-orm/runtime-tokio-rustls", "sea-orm/with-chrono"]
+mariadb = ["mysql"]
+full = ["sqlite", "postgres", "mysql"]
 
 [package.metadata.scripts]
 run = "cargo run"

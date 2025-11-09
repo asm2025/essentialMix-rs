@@ -3,13 +3,13 @@
 
 use async_trait::async_trait;
 use sea_orm::{
-    DatabaseTransaction, DeleteResult, JoinType, PaginatorTrait, QuerySelect, Set, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, DatabaseTransaction, DeleteResult, 
+    EntityTrait, JoinType, ModelTrait, PaginatorTrait, QueryFilter, QuerySelect, Set, TransactionTrait,
 };
 
-use emixdb::{
-    Error, Result,
-    prelude::{sea_query::OnConflict, *},
-};
+use emixseaorm::{Error, Result, repositories::*};
+use emixdb::{dto::{ModelWithRelated, Pagination, ResultSet}, models::Merge};
+use sea_orm::sea_query::OnConflict;
 
 // In a real implementation, you would import your models from your own crate
 // For this example, we assume the models are available in scope

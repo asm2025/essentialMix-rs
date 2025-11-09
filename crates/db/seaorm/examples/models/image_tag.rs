@@ -17,25 +17,19 @@ pub struct Model {
 // In a real implementation, replace these with your actual module paths:
 // use super::image;
 // use super::tag;
-use crate::image;
-use crate::tag;
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "crate::image::Entity",
-        // In a real implementation, use: belongs_to = "super::image::Entity"
+        belongs_to = "super::image::Entity",
         from = "Column::ImageId",
-        to = "crate::image::Column::Id"
-        // In a real implementation, use: to = "super::image::Column::Id"
+        to = "super::image::Column::Id"
     )]
     ImageEntity,
     #[sea_orm(
-        belongs_to = "crate::tag::Entity",
-        // In a real implementation, use: belongs_to = "super::tag::Entity"
+        belongs_to = "super::tag::Entity",
         from = "Column::TagId",
-        to = "crate::tag::Column::Id"
-        // In a real implementation, use: to = "super::tag::Column::Id"
+        to = "super::tag::Column::Id"
     )]
     TagEntity,
 }

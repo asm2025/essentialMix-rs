@@ -13,15 +13,16 @@ emixcore = { workspace = true }
 
 [workspace]
 members = [
+	".",
 	"crates/ai",
 	"crates/base",
 	"crates/core",
+	"crates/db/common",
+	"crates/db/diesel",
+	"crates/db/seaorm",
 	"crates/log",
 	"crates/net",
 	"crates/threading",
-	"crates/db/common",
-	"crates/db/seaorm",
-	"crates/db/diesel",
 ]
 
 [workspace.package]
@@ -34,12 +35,12 @@ authors = ["asm <asm2do@gmail.com>"]
 emixai = { path = "crates/ai" }
 emix = { path = "crates/base" }
 emixcore = { path = "crates/core" }
+emixdb = { path = "crates/db/common" }
+emixdiesel = { path = "crates/db/diesel" }
+emixseaorm = { path = "crates/db/seaorm" }
 emixlog = { path = "crates/log" }
 emixnet = { path = "crates/net" }
 emixthreading = { path = "crates/threading" }
-emixdb = { path = "crates/db/common" }
-emixseaorm = { path = "crates/db/seaorm" }
-emixdiesel = { path = "crates/db/diesel" }
 parking_lot = "0"
 
 [profile.dist]
