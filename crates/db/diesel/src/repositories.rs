@@ -16,11 +16,11 @@ impl<F> ClosureFilter<F> {
     }
 }
 
-pub trait FilterQuery<T> {
+pub trait TFilterQuery<T> {
     fn apply(&self, query: T) -> T;
 }
 
-impl<T, F> FilterQuery<T> for F
+impl<T, F> TFilterQuery<T> for F
 where
     F: Fn(T) -> T,
 {
@@ -29,7 +29,7 @@ where
     }
 }
 
-impl<F, T> FilterQuery<T> for ClosureFilter<F>
+impl<F, T> TFilterQuery<T> for ClosureFilter<F>
 where
     F: Fn(T) -> T,
 {
@@ -43,7 +43,7 @@ where
 /// This trait abstracts over different connection types and provides
 /// methods for obtaining connections and starting transactions.
 #[async_trait]
-pub trait HasConnection<Conn>
+pub trait THasConnection<Conn>
 where
     Conn: AsyncConnection + 'static,
 {
@@ -60,11 +60,11 @@ where
 /// - `Conn`: The connection type (e.g., `AsyncSqliteConnection`)
 ///
 /// # Performance Note
-/// Avoid deriving `Debug` for types that hold `Arc<dyn Repository<...>>` trait objects,
+/// Avoid deriving `Debug` for types that hold `Arc<dyn TRepository<...>>` trait objects,
 /// as this can cause excessive stack allocations when formatting. If debugging is required,
 /// consider using a custom `Debug` implementation or increasing stack size via `RUST_MIN_STACK`.
 #[async_trait]
-pub trait Repository<M, U, I, Conn>: HasConnection<Conn>
+pub trait TRepository<M, U, I, Conn>: THasConnection<Conn>
 where
     M: Send + Sync,
     U: Send + Sync,
@@ -102,11 +102,11 @@ where
 /// - `Conn`: The connection type
 ///
 /// # Performance Note
-/// Avoid deriving `Debug` for types that hold `Arc<dyn RepositoryWithRelated<...>>` trait objects,
+/// Avoid deriving `Debug` for types that hold `Arc<dyn TRepositoryWithRelated<...>>` trait objects,
 /// as this can cause excessive stack allocations when formatting. If debugging is required,
 /// consider using a custom `Debug` implementation or increasing stack size via `RUST_MIN_STACK`.
 #[async_trait]
-pub trait RepositoryWithRelated<M, U, R, I, Conn>: Repository<M, U, I, Conn>
+pub trait TRepositoryWithRelated<M, U, R, I, Conn>: TRepository<M, U, I, Conn>
 where
     M: Send + Sync,
     U: Send + Sync,

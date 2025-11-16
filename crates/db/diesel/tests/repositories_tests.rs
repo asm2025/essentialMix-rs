@@ -1,6 +1,6 @@
 use emixdiesel::repositories::*;
 
-// Test data structures for FilterQuery tests
+// Test data structures for TTFilterQuery tests
 #[derive(Debug, Clone, PartialEq)]
 struct TestQuery {
     limit: Option<i32>,
@@ -177,21 +177,21 @@ fn test_closure_filter_new() {
 
 #[test]
 fn test_filter_query_trait_implemented_for_closures() {
-    // Verify that closures automatically implement FilterQuery
+    // Verify that closures automatically implement TFilterQuery
     let filter = |query: TestQuery| query.with_limit(10);
     let query = TestQuery::new();
     
-    // The FilterQuery trait is implemented for Fn(T) -> T
-    let _ = FilterQuery::apply(&filter, query);
+    // The TFilterQuery trait is implemented for Fn(T) -> T
+    let _ = TFilterQuery::apply(&filter, query);
 }
 
 #[test]
 fn test_filter_query_trait_implemented_for_closure_filter() {
-    // Verify that ClosureFilter implements FilterQuery
+    // Verify that ClosureFilter implements TFilterQuery
     let filter = ClosureFilter::new(|query: TestQuery| query.with_limit(10));
     let query = TestQuery::new();
     
-    let _ = FilterQuery::apply(&filter, query);
+    let _ = TFilterQuery::apply(&filter, query);
 }
 
 #[test]
@@ -202,9 +202,9 @@ fn test_filter_composition() {
     let filter3 = |query: TestQuery| query.with_filter_name("test".to_string());
     
     let query = TestQuery::new();
-    let query = FilterQuery::apply(&filter1, query);
-    let query = FilterQuery::apply(&filter2, query);
-    let query = FilterQuery::apply(&filter3, query);
+    let query = TFilterQuery::apply(&filter1, query);
+    let query = TFilterQuery::apply(&filter2, query);
+    let query = TFilterQuery::apply(&filter3, query);
     
     assert_eq!(query.limit, Some(10));
     assert_eq!(query.offset, Some(5));
@@ -218,14 +218,14 @@ fn test_closure_filter_with_state() {
     let filter = ClosureFilter::new(move |query: TestQuery| query.with_limit(default_limit));
     
     let query = TestQuery::new();
-    let result = FilterQuery::apply(&filter, query);
+    let result = TFilterQuery::apply(&filter, query);
     
     assert_eq!(result.limit, Some(42));
 }
 
 #[test]
 fn test_filter_query_generic_over_query_type() {
-    // Verify that FilterQuery works with different query types
+    // Verify that TFilterQuery works with different query types
     #[derive(Clone)]
     struct OtherQuery {
         value: i32,
@@ -240,7 +240,7 @@ fn test_filter_query_generic_over_query_type() {
     
     let filter = ClosureFilter::new(|q: OtherQuery| q.with_value(100));
     let query = OtherQuery { value: 0 };
-    let result = FilterQuery::apply(&filter, query);
+    let result = TFilterQuery::apply(&filter, query);
     
     assert_eq!(result.value, 100);
 }

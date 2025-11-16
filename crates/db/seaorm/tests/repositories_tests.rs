@@ -113,7 +113,7 @@ fn test_filter_condition_with_direct_condition() {
     let query = Entity::find();
 
     // Apply the condition as a filter using explicit trait call
-    let filtered = FilterCondition::<entities::Entity>::apply(&condition, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&condition, query);
 
     // Verify the query is modified (check SQL generation)
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
@@ -128,7 +128,7 @@ fn test_filter_condition_with_closure() {
     let filter = |query: Select<entities::Entity>| query.filter(Column::Age.gt(18));
     let query = Entity::find();
 
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
 }
@@ -140,7 +140,7 @@ fn test_filter_condition_with_closure_filter() {
     let filter = ClosureFilter::new(|| Column::Name.eq("test").into_condition());
     let query = Entity::find();
 
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
 }
@@ -153,8 +153,8 @@ fn test_filter_condition_chaining() {
     let filter2 = ClosureFilter::new(|| Column::Age.gt(18).into_condition());
 
     let query = Entity::find();
-    let query = FilterCondition::<entities::Entity>::apply(&filter1, query);
-    let query = FilterCondition::<entities::Entity>::apply(&filter2, query);
+    let query = TFilterCondition::<entities::Entity>::apply(&filter1, query);
+    let query = TFilterCondition::<entities::Entity>::apply(&filter2, query);
 
     let sql = query.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
@@ -171,7 +171,7 @@ fn test_filter_condition_with_or() {
     });
 
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
@@ -191,7 +191,7 @@ fn test_filter_condition_complex() {
     });
 
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
@@ -205,7 +205,7 @@ fn test_filter_condition_with_move_semantics() {
     let filter = ClosureFilter::new(move || Column::Name.eq(name.clone()).into_condition());
 
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
@@ -227,7 +227,7 @@ fn test_direct_condition_with_complex_logic() {
 
     let direct = DirectCondition(condition);
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&direct, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&direct, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
@@ -240,7 +240,7 @@ fn test_filter_related_condition_with_condition() {
     let condition = Condition::all().add(entities_related::Column::Title.contains("test"));
     let query = Entity::find().find_with_related(entities_related::Entity);
 
-    let filtered = FilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
+    let filtered = TFilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
         &condition, query,
     );
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
@@ -257,8 +257,9 @@ fn test_filter_related_condition_with_closure() {
     };
     let query = Entity::find().find_with_related(entities_related::Entity);
 
-    let filtered =
-        FilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(&filter, query);
+    let filtered = TFilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
+        &filter, query,
+    );
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("SELECT"));
 }
@@ -274,8 +275,9 @@ fn test_filter_related_condition_with_closure_filter() {
     });
 
     let query = Entity::find().find_with_related(entities_related::Entity);
-    let filtered =
-        FilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(&filter, query);
+    let filtered = TFilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
+        &filter, query,
+    );
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("SELECT"));
@@ -291,8 +293,9 @@ fn test_filter_related_condition_with_direct_condition() {
 
     let direct = DirectCondition(condition);
     let query = Entity::find().find_with_related(entities_related::Entity);
-    let filtered =
-        FilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(&direct, query);
+    let filtered = TFilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
+        &direct, query,
+    );
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("SELECT"));
@@ -315,10 +318,10 @@ fn test_filter_related_multiple_conditions() {
     });
 
     let query = Entity::find().find_with_related(entities_related::Entity);
-    let query = FilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
+    let query = TFilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
         &filter1, query,
     );
-    let query = FilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
+    let query = TFilterRelatedCondition::<entities::Entity, entities_related::Entity>::apply(
         &filter2, query,
     );
 
@@ -366,10 +369,10 @@ fn test_closure_filter_reusability() {
 
     // Apply the same filter to multiple queries
     let query1 = Entity::find();
-    let filtered1 = FilterCondition::<entities::Entity>::apply(&filter, query1);
+    let filtered1 = TFilterCondition::<entities::Entity>::apply(&filter, query1);
 
     let query2 = Entity::find();
-    let filtered2 = FilterCondition::<entities::Entity>::apply(&filter, query2);
+    let filtered2 = TFilterCondition::<entities::Entity>::apply(&filter, query2);
 
     // Both should produce the same SQL
     let sql1 = filtered1
@@ -389,7 +392,7 @@ fn test_filter_with_in_clause() {
     let filter = ClosureFilter::new(move || Column::Id.is_in(ids.clone()).into_condition());
 
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
@@ -405,7 +408,7 @@ fn test_filter_with_not_in_clause() {
         ClosureFilter::new(move || Column::Id.is_not_in(excluded_ids.clone()).into_condition());
 
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));
@@ -418,7 +421,7 @@ fn test_empty_condition_all() {
 
     let condition = Condition::all();
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&condition, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&condition, query);
 
     // Empty Condition::all() should not affect the query significantly
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
@@ -431,7 +434,7 @@ fn test_empty_condition_any() {
 
     let condition = Condition::any();
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&condition, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&condition, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("SELECT"));
@@ -444,7 +447,7 @@ fn test_filter_condition_with_like_pattern() {
     let filter = ClosureFilter::new(|| Column::Name.like("%john%").into_condition());
 
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("LIKE"));
@@ -461,7 +464,7 @@ fn test_filter_condition_with_null_check() {
     });
 
     let query = Entity::find();
-    let filtered = FilterCondition::<entities::Entity>::apply(&filter, query);
+    let filtered = TFilterCondition::<entities::Entity>::apply(&filter, query);
 
     let sql = filtered.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("IS NOT NULL"));
@@ -479,9 +482,9 @@ fn test_multiple_filter_types_together() {
         |query: Select<entities::Entity>| query.filter(Column::Email.ends_with("@example.com"));
 
     let query = Entity::find();
-    let query = FilterCondition::<entities::Entity>::apply(&closure_filter, query);
-    let query = FilterCondition::<entities::Entity>::apply(&direct_condition, query);
-    let query = FilterCondition::<entities::Entity>::apply(&fn_filter, query);
+    let query = TFilterCondition::<entities::Entity>::apply(&closure_filter, query);
+    let query = TFilterCondition::<entities::Entity>::apply(&direct_condition, query);
+    let query = TFilterCondition::<entities::Entity>::apply(&fn_filter, query);
 
     let sql = query.build(sea_orm::DatabaseBackend::Sqlite).to_string();
     assert!(sql.contains("WHERE"));

@@ -7,7 +7,7 @@ mod repositories;
 
 use emixdb::dto::Pagination;
 use emixseaorm::prelude::*;
-use emixseaorm::repositories::{Repository, RepositoryWithRelated};
+use emixseaorm::repositories::{TRepository, TRepositoryWithRelated};
 use sea_orm::Database;
 use models::*;
 use repositories::*;

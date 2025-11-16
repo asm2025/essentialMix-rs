@@ -21,7 +21,7 @@ emixdiesel = { path = "../../crates/db/diesel", features = ["postgres"] }
 
 ```rust
 use emixdiesel::prelude::*;
-use emixdiesel::repositories::{ClosureFilter, FilterQuery};
+use emixdiesel::repositories::{ClosureFilter, TFilterQuery};
 use crate::schema::posts::dsl::*;
 
 // Start from any boxed Diesel query (useful inside repositories).
@@ -33,7 +33,7 @@ let only_published = ClosureFilter::new(|q| q.filter(published.eq(true)));
 let filtered = only_published.apply(query);
 ```
 
-Pair this with `emixdb::dto::Pagination` and the `Repository` traits in
+Pair this with `emixdb::dto::Pagination` and the `TRepository` traits in
 `src/repositories.rs` to implement reusable CRUD layers. See the `examples/`
 folder for complete Diesel + async runtime demos, including migrations for
 SQLite, PostgreSQL, and MySQL.

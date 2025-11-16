@@ -266,7 +266,7 @@ examples/
 1. Update the migration SQL file (`migrations/{db}/up.sql`)
 2. Update `Model` struct in `models/image.rs`
 3. Update `CreateImageDto` and `UpdateImageDto`
-4. Update the `Merge` implementation
+4. Update the `TMerge` implementation
 5. Re-run migration
 
 ### Create a New Entity

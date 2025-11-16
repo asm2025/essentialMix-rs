@@ -6,7 +6,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::tables::images;
-use emixdb::models::Merge;
+use emixdb::models::TMerge;
 
 // Define the ID type based on the database backend
 #[cfg(feature = "sqlite")]
@@ -111,7 +111,7 @@ pub struct UpdateImageDto {
     pub alt_text: Option<String>,
 }
 
-impl Merge<UpdateImageModel> for UpdateImageDto {
+impl TMerge<UpdateImageModel> for UpdateImageDto {
     fn merge(&self, model: &mut UpdateImageModel) -> bool {
         let mut changed = false;
 

@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::tables::tags;
-use emixdb::models::Merge;
+use emixdb::models::TMerge;
 
 // Define the ID type based on the database backend
 #[cfg(feature = "sqlite")]
@@ -56,7 +56,7 @@ pub struct UpdateTagDto {
     pub name: Option<String>,
 }
 
-impl Merge<UpdateTagModel> for UpdateTagDto {
+impl TMerge<UpdateTagModel> for UpdateTagDto {
     fn merge(&self, model: &mut UpdateTagModel) -> bool {
         let mut changed = false;
 

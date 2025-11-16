@@ -4,7 +4,7 @@
 use sea_orm::{EntityTrait, NotSet, Set, prelude::*};
 use serde::{Deserialize, Serialize};
 
-use emixdb::models::Merge;
+use emixdb::models::TMerge;
 
 // Example: Tag entity
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
@@ -71,7 +71,7 @@ pub struct UpdateTagDto {
     pub name: Option<String>,
 }
 
-impl Merge<ActiveModel> for UpdateTagDto {
+impl TMerge<ActiveModel> for UpdateTagDto {
     fn merge(&self, model: &mut ActiveModel) -> bool {
         let mut changed = false;
 

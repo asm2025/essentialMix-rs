@@ -8,7 +8,7 @@ use sea_orm::{
 };
 
 use emixseaorm::{Error, Result, repositories::*};
-use emixdb::{dto::{ModelWithRelated, Pagination, ResultSet}, models::Merge};
+use emixdb::{dto::{ModelWithRelated, Pagination, ResultSet}, models::TMerge};
 use sea_orm::sea_query::OnConflict;
 
 // In a real implementation, you would import your models from your own crate
@@ -18,12 +18,12 @@ use sea_orm::sea_query::OnConflict;
 use crate::models::*;
 
 #[async_trait]
-pub trait ImageRepositoryExt: RepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> {
+pub trait TImageRepositoryExt: TRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> {
     async fn create_with_tags(&self, model: CreateImageDto) -> Result<ImageModel>;
     async fn list_tags(
         &self,
         id: i64,
-        filter: Option<Box<dyn FilterCondition<TagEntity> + Send + Sync>>,
+        filter: Option<Box<dyn TFilterCondition<TagEntity> + Send + Sync>>,
         pagination: Option<Pagination>,
     ) -> Result<ResultSet<TagModel>>;
     async fn add_tag(&self, id: i64, related_id: i64) -> Result<()>;
@@ -44,7 +44,7 @@ impl ImageRepository {
 }
 
 #[async_trait]
-impl HasDatabase for ImageRepository {
+impl THasDatabase for ImageRepository {
     fn database(&self) -> &DatabaseConnection {
         &self.db
     }
@@ -55,10 +55,10 @@ impl HasDatabase for ImageRepository {
 }
 
 #[async_trait]
-impl Repository<ImageEntity, UpdateImageDto> for ImageRepository {
+impl TRepository<ImageEntity, UpdateImageDto> for ImageRepository {
     async fn list(
         &self,
-        filter: Option<Box<dyn FilterCondition<ImageEntity> + Send + Sync>>,
+        filter: Option<Box<dyn TFilterCondition<ImageEntity> + Send + Sync>>,
         pagination: Option<Pagination>,
     ) -> Result<ResultSet<<ImageEntity as EntityTrait>::Model>> {
         let mut query = <ImageEntity as EntityTrait>::find();
@@ -91,7 +91,7 @@ impl Repository<ImageEntity, UpdateImageDto> for ImageRepository {
 
     async fn count(
         &self,
-        filter: Option<Box<dyn FilterCondition<ImageEntity> + Send + Sync>>,
+        filter: Option<Box<dyn TFilterCondition<ImageEntity> + Send + Sync>>,
     ) -> Result<u64> {
         let mut query = <ImageEntity as EntityTrait>::find();
 
@@ -149,12 +149,12 @@ impl Repository<ImageEntity, UpdateImageDto> for ImageRepository {
 }
 
 #[async_trait]
-impl RepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRepository {
+impl TRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRepository {
     async fn list_with_related(
         &self,
-        filter: Option<Box<dyn FilterCondition<ImageEntity> + Send + Sync>>,
+        filter: Option<Box<dyn TFilterCondition<ImageEntity> + Send + Sync>>,
         filter_related: Option<
-            Box<dyn FilterRelatedCondition<ImageEntity, TagEntity> + Send + Sync>,
+            Box<dyn TFilterRelatedCondition<ImageEntity, TagEntity> + Send + Sync>,
         >,
         pagination: Option<Pagination>,
     ) -> Result<ResultSet<ModelWithRelated<ImageModel, TagModel>>> {
@@ -229,7 +229,7 @@ impl RepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRepo
 }
 
 #[async_trait]
-impl ImageRepositoryExt for ImageRepository {
+impl TImageRepositoryExt for ImageRepository {
     async fn create_with_tags(&self, model: CreateImageDto) -> Result<ImageModel> {
         let tags = model.tags.clone();
         let active_model: ImageModelDto = model.into();
@@ -247,7 +247,7 @@ impl ImageRepositoryExt for ImageRepository {
     async fn list_tags(
         &self,
         id: i64,
-        filter: Option<Box<dyn FilterCondition<TagEntity> + Send + Sync>>,
+        filter: Option<Box<dyn TFilterCondition<TagEntity> + Send + Sync>>,
         pagination: Option<Pagination>,
     ) -> Result<ResultSet<TagModel>> {
         let mut query = <TagEntity as EntityTrait>::find()

@@ -1,4 +1,4 @@
-use emixdb::models::Merge;
+use emixdb::models::TMerge;
 
 #[derive(Debug, Clone, PartialEq)]
 struct User {
@@ -15,7 +15,7 @@ struct UpdateUser {
     age: Option<i32>,
 }
 
-impl Merge<User> for UpdateUser {
+impl TMerge<User> for UpdateUser {
     fn merge(&self, model: &mut User) -> bool {
         let mut changed = false;
 

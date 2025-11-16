@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use sea_orm::{EntityTrait, NotSet, Set, prelude::*};
 use serde::{Deserialize, Serialize};
 
-use emixdb::models::Merge;
+use emixdb::models::TMerge;
 
 // Example: Image entity
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
@@ -140,7 +140,7 @@ pub struct UpdateImageDto {
     pub alt_text: Option<String>,
 }
 
-impl Merge<ActiveModel> for UpdateImageDto {
+impl TMerge<ActiveModel> for UpdateImageDto {
     fn merge(&self, model: &mut ActiveModel) -> bool {
         // can also use: if let Some(title) = self.title.as_ref() {
         let mut changed = false;

@@ -53,7 +53,7 @@ impl ImageRepository {
 }
 
 #[async_trait]
-pub trait ImageRepositoryExt {
+pub trait TImageRepositoryExt {
     /// List all images with optional pagination
     async fn list(&self, pagination: Option<Pagination>) -> Result<ResultSet<ImageModel>>;
 
@@ -107,7 +107,7 @@ pub trait ImageRepositoryExt {
 }
 
 #[async_trait]
-impl ImageRepositoryExt for ImageRepository {
+impl TImageRepositoryExt for ImageRepository {
     async fn list(&self, pagination: Option<Pagination>) -> Result<ResultSet<ImageModel>> {
         let mut conn = self.get_conn().await?;
 
