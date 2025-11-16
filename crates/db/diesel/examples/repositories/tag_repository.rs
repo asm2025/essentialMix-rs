@@ -54,7 +54,7 @@ impl TagRepository {
 }
 
 #[async_trait]
-pub trait ITagRepository {
+pub trait TagRepositoryExt {
     /// List all tags with optional pagination
     async fn list(&self, pagination: Option<Pagination>) -> Result<ResultSet<TagModel>>;
 
@@ -102,7 +102,7 @@ pub trait ITagRepository {
 }
 
 #[async_trait]
-impl ITagRepository for TagRepository {
+impl TagRepositoryExt for TagRepository {
     async fn list(&self, pagination: Option<Pagination>) -> Result<ResultSet<TagModel>> {
         let mut conn = self.get_conn().await?;
 

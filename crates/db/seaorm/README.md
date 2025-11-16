@@ -30,7 +30,7 @@ let published = query.all(&db).await?;
 ```
 
 - Combine `FilterCondition` and `FilterRelatedCondition` to express joins.
-- Leverage `IRepository` and `IRepositoryWithRelated` to share CRUD logic across
+- Leverage `Repository` and `RepositoryWithRelated` to share CRUD logic across
   entities.
 - Reuse `emixdb::dto::{Pagination, ResultSet}` for consistent API responses.
 - Check the `examples/` directory for a runnable SeaORM + migration showcase.

@@ -18,7 +18,7 @@ use sea_orm::sea_query::OnConflict;
 use crate::models::*;
 
 #[async_trait]
-pub trait IImageRepository: IRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> {
+pub trait ImageRepositoryExt: RepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> {
     async fn create_with_tags(&self, model: CreateImageDto) -> Result<ImageModel>;
     async fn list_tags(
         &self,
@@ -44,7 +44,7 @@ impl ImageRepository {
 }
 
 #[async_trait]
-impl IHasDatabase for ImageRepository {
+impl HasDatabase for ImageRepository {
     fn database(&self) -> &DatabaseConnection {
         &self.db
     }
@@ -55,7 +55,7 @@ impl IHasDatabase for ImageRepository {
 }
 
 #[async_trait]
-impl IRepository<ImageEntity, UpdateImageDto> for ImageRepository {
+impl Repository<ImageEntity, UpdateImageDto> for ImageRepository {
     async fn list(
         &self,
         filter: Option<Box<dyn FilterCondition<ImageEntity> + Send + Sync>>,
@@ -149,7 +149,7 @@ impl IRepository<ImageEntity, UpdateImageDto> for ImageRepository {
 }
 
 #[async_trait]
-impl IRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRepository {
+impl RepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRepository {
     async fn list_with_related(
         &self,
         filter: Option<Box<dyn FilterCondition<ImageEntity> + Send + Sync>>,
@@ -229,7 +229,7 @@ impl IRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRep
 }
 
 #[async_trait]
-impl IImageRepository for ImageRepository {
+impl ImageRepositoryExt for ImageRepository {
     async fn create_with_tags(&self, model: CreateImageDto) -> Result<ImageModel> {
         let tags = model.tags.clone();
         let active_model: ImageModelDto = model.into();

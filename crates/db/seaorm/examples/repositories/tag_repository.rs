@@ -18,7 +18,7 @@ use sea_orm::sea_query::OnConflict;
 use crate::models::*;
 
 #[async_trait]
-pub trait ITagRepository: IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> {
+pub trait TagRepositoryExt: RepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> {
     async fn list_images(
         &self,
         id: i64,
@@ -45,7 +45,7 @@ impl TagRepository {
 }
 
 #[async_trait]
-impl IHasDatabase for TagRepository {
+impl HasDatabase for TagRepository {
     fn database(&self) -> &DatabaseConnection {
         &self.db
     }
@@ -56,7 +56,7 @@ impl IHasDatabase for TagRepository {
 }
 
 #[async_trait]
-impl IRepository<TagEntity, UpdateTagDto> for TagRepository {
+impl Repository<TagEntity, UpdateTagDto> for TagRepository {
     async fn list(
         &self,
         filter: Option<Box<dyn FilterCondition<TagEntity> + Send + Sync>>,
@@ -147,7 +147,7 @@ impl IRepository<TagEntity, UpdateTagDto> for TagRepository {
 }
 
 #[async_trait]
-impl IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> for TagRepository {
+impl RepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> for TagRepository {
     async fn list_with_related(
         &self,
         filter: Option<Box<dyn FilterCondition<TagEntity> + Send + Sync>>,
@@ -227,7 +227,7 @@ impl IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> for TagReposit
 }
 
 #[async_trait]
-impl ITagRepository for TagRepository {
+impl TagRepositoryExt for TagRepository {
     async fn list_images(
         &self,
         id: i64,

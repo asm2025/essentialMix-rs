@@ -38,8 +38,12 @@ where
     }
 }
 
+/// Trait for types that provide database connection access
+///
+/// This trait abstracts over different connection types and provides
+/// methods for obtaining connections and starting transactions.
 #[async_trait]
-pub trait IHasConnection<Conn>
+pub trait HasConnection<Conn>
 where
     Conn: AsyncConnection + 'static,
 {
@@ -55,14 +59,12 @@ where
 /// - `I`: The ID type (e.g., `i64`)
 /// - `Conn`: The connection type (e.g., `AsyncSqliteConnection`)
 ///
-/// # Debugging
-/// Deriving `Debug` for types that hold an `Arc<dyn IRepository<...>>` (or any trait inheriting
-/// from `IRepository`) triggers recursive trait object formatting and can cause a stack overflow
-/// when debugging the crate. If you must derive `Debug`, increase the stack size (for example, set
-/// `RUST_MIN_STACK`) at least temporarily or within the development environment used for
-/// debugging.
+/// # Performance Note
+/// Avoid deriving `Debug` for types that hold `Arc<dyn Repository<...>>` trait objects,
+/// as this can cause excessive stack allocations when formatting. If debugging is required,
+/// consider using a custom `Debug` implementation or increasing stack size via `RUST_MIN_STACK`.
 #[async_trait]
-pub trait IRepository<M, U, I, Conn>: IHasConnection<Conn>
+pub trait Repository<M, U, I, Conn>: HasConnection<Conn>
 where
     M: Send + Sync,
     U: Send + Sync,
@@ -99,14 +101,12 @@ where
 /// - `I`: The ID type
 /// - `Conn`: The connection type
 ///
-/// # Debugging
-/// Deriving `Debug` for types that hold an `Arc<dyn IRepositoryWithRelated<...>>` (or any trait
-/// inheriting from `IRepositoryWithRelated`) triggers recursive trait object formatting and can
-/// cause a stack overflow when debugging the crate. If you must derive `Debug`, increase the stack
-/// size (for example, set `RUST_MIN_STACK`) at least temporarily or within the development
-/// environment used for debugging.
+/// # Performance Note
+/// Avoid deriving `Debug` for types that hold `Arc<dyn RepositoryWithRelated<...>>` trait objects,
+/// as this can cause excessive stack allocations when formatting. If debugging is required,
+/// consider using a custom `Debug` implementation or increasing stack size via `RUST_MIN_STACK`.
 #[async_trait]
-pub trait IRepositoryWithRelated<M, U, R, I, Conn>: IRepository<M, U, I, Conn>
+pub trait RepositoryWithRelated<M, U, R, I, Conn>: Repository<M, U, I, Conn>
 where
     M: Send + Sync,
     U: Send + Sync,
