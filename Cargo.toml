@@ -23,13 +23,14 @@ members = [
 	"crates/log",
 	"crates/net",
 	"crates/threading",
+	"crates/collections",
 ]
 
 [workspace.package]
 version = "0.5.0"
 edition = "2024"
 license = "MIT"
-authors = ["asm <asm2do@gmail.com>"]
+authors = ["asm <asm2025@outlook.com>"]
 
 [workspace.dependencies]
 emixai = { path = "crates/ai" }
@@ -41,6 +42,7 @@ emixseaorm = { path = "crates/db/seaorm" }
 emixlog = { path = "crates/log" }
 emixnet = { path = "crates/net" }
 emixthreading = { path = "crates/threading" }
+emixcollections = { path = "crates/collections" }
 parking_lot = "0"
 
 [profile.dist]
