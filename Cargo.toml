@@ -24,6 +24,7 @@ members = [
 	"crates/net",
 	"crates/threading",
 	"crates/collections",
+	"crates/crypto",
 ]
 
 [workspace.package]
@@ -43,6 +44,7 @@ emixlog = { path = "crates/log" }
 emixnet = { path = "crates/net" }
 emixthreading = { path = "crates/threading" }
 emixcollections = { path = "crates/collections" }
+emixcrypto = { path = "crates/crypto" }
 parking_lot = "0"
 
 [profile.dist]

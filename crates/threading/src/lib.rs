@@ -14,7 +14,7 @@ use tokio::{
     time::{self, Duration},
 };
 
-pub use emixcore::*;
+pub use emixcore::{Error, Result};
 
 #[derive(Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[must_use]

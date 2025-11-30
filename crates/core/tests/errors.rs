@@ -24,15 +24,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_error_from_other_error() {
-        let err = Error::from_other_error("test error".to_string());
-
-        match err {
-            Error::Other(msg) => assert_eq!(msg, "test error"),
-            _ => panic!("Should be Other variant"),
-        }
-    }
 
     #[test]
     fn test_error_from_poison_error() {

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::fmt::{Display, Result as DisplayResult};
 
-use crate::Result;
+use crate::error::{NetError, Result};
 use crate::web::reqwestx::build_client_for_api;
 #[cfg(feature = "mail")]
 use emix::random;
@@ -452,7 +452,7 @@ impl TempMail {
         let body = match decode_html_entities(&body) {
             Ok(b) => b,
             Err(e) => {
-                return Err(Error::from_other_error(format!(
+                return Err(NetError::html_decode(format!(
                     "Failed to decode HTML entities: {:?}",
                     e
                 )));

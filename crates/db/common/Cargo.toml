@@ -7,6 +7,7 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+emixcore = { workspace = true }
 serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]

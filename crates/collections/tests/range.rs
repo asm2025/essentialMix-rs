@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use emixcollections::range::*;
+    use emixcollections::range::Range;
 
     #[test]
     fn test_basic_range() {

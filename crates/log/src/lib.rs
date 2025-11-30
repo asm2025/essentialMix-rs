@@ -1,3 +1,4 @@
+mod error;
 #[cfg(feature = "log4rs")]
 pub mod log4rsx;
 mod multilogger;
@@ -5,7 +6,8 @@ mod multilogger;
 pub mod slogx;
 pub use multilogger::*;
 
-pub use emixcore::*;
+pub use emixcore::{Error, Result};
+pub use error::{LogError, Result as LogResult};
 
 use log::LevelFilter;
 

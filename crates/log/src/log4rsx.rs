@@ -1,7 +1,7 @@
 use log4rs::*;
 use std::path::Path;
 
-use crate::{Error, Result};
+use crate::error::{LogError, Result};
 
 use self::{
     append::{
@@ -50,7 +50,7 @@ pub fn configure<T: AsRef<Path>>(
     );
     let fix_window_roller = FixedWindowRoller::builder()
         .build(&roller_pattern, 6)
-        .map_err(|e| Error::from_other_error(e.to_string()))?;
+        .map_err(|e| LogError::log4rs_config(e.to_string()))?;
     let policy = CompoundPolicy::new(Box::new(size_trigger), Box::new(fix_window_roller));
     let file = RollingFileAppender::builder()
         .encoder(Box::new(PatternEncoder::new(&format!(
@@ -58,7 +58,8 @@ pub fn configure<T: AsRef<Path>>(
             LOG_DATE_FORMAT
         ))))
         .append(true)
-        .build(file_name, Box::new(policy))?;
+        .build(file_name, Box::new(policy))
+        .map_err(|e| LogError::log4rs_config(e.to_string()))?;
     let config = Config::builder()
         .appender(Appender::builder().build("console", Box::new(console)))
         .appender(Appender::builder().build("file", Box::new(file)))
@@ -76,7 +77,7 @@ pub fn configure<T: AsRef<Path>>(
 }
 
 pub fn from_config(config: Config) -> Result<Handle> {
-    let handle = log4rs::init_config(config).map_err(|e| Error::from_std_error(e))?;
+    let handle = log4rs::init_config(config).map_err(|e| LogError::log4rs_init(e.to_string()))?;
     Ok(handle)
 }
 
@@ -96,13 +97,13 @@ pub fn build_with<T: AsRef<Path>>(
                 .appender("file")
                 .build(level.into()),
         )
-        .map_err(|e| Error::from_std_error(e))?;
-    let handle = log4rs::init_config(config).map_err(|e| Error::from_std_error(e))?;
+        .map_err(|e| LogError::log4rs_config(e.to_string()))?;
+    let handle = log4rs::init_config(config).map_err(|e| LogError::log4rs_init(e.to_string()))?;
     Ok(handle)
 }
 
 pub fn from_file<T: AsRef<Path>>(yaml_file_name: T) -> Result<()> {
     log4rs::init_file(yaml_file_name, Default::default())
-        .map_err(|e| Error::from_other_error(e.to_string()))?;
+        .map_err(|e| LogError::log4rs_init(e.to_string()))?;
     Ok(())
 }

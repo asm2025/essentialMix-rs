@@ -91,11 +91,6 @@ pub enum Error {
 }
 
 impl Error {
-    /// Create an error from a string. Only used if the error cannot be sent between threads, otherwise use `from_std_error`.
-    pub fn from_other_error(message: String) -> Self {
-        Error::Other(message)
-    }
-
     /// Create an error from a standard error. This is the preferred way to create an error from an error that can be sent between threads.
     pub fn from_std_error<E: std::error::Error + Send + Sync + 'static>(err: E) -> Self {
         Error::Error(Box::new(err))

@@ -7,4 +7,4 @@ pub mod io;
 pub mod random;
 pub mod string;
 
-pub use emixcore::*;
+pub use emixcore::{Error, Result};
