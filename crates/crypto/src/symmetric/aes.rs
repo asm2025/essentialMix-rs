@@ -1,9 +1,5 @@
 #[cfg(feature = "aes")]
 use zeroize::Zeroize;
-#[cfg(feature = "aes")]
-use aes::Aes256;
-#[cfg(feature = "aes")]
-use cbc::{cipher::BlockDecryptMut, cipher::BlockEncryptMut, cipher::generic_array::GenericArray};
 use crate::symmetric::traits::{SymmetricAlgorithm, CipherMode, PaddingMode};
 use crate::traits::{Algorithm, EncodingConfig, Encrypt};
 use crate::error::{CryptoError, Result};
@@ -53,6 +49,7 @@ impl AesAlgorithm {
         padded
     }
 
+    #[allow(dead_code)]
     fn remove_pkcs7_padding(data: &[u8]) -> Result<Vec<u8>> {
         if data.is_empty() {
             return Err(CryptoError::Padding("Empty data".to_string()));
@@ -118,7 +115,7 @@ impl Encrypt for AesAlgorithm {
         }
 
         // Apply padding
-        let padded = match self.padding {
+        let _padded = match self.padding {
             PaddingMode::Pkcs7 => Self::apply_pkcs7_padding(buffer, 16),
             PaddingMode::NoPadding => {
                 if buffer.len() % 16 != 0 {

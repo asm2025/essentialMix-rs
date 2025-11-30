@@ -53,6 +53,7 @@ impl TagRepository {
     }
 }
 
+#[allow(dead_code)]
 #[async_trait]
 pub trait TTagRepositoryExt {
     /// List all tags with optional pagination

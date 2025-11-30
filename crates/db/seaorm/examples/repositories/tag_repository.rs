@@ -17,6 +17,7 @@ use sea_orm::sea_query::OnConflict;
 // use your_crate::models::*;
 use crate::models::*;
 
+#[allow(dead_code)]
 #[async_trait]
 pub trait TTagRepositoryExt: TRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> {
     async fn list_images(

@@ -1,10 +1,13 @@
-use async_openai::*;
-use config::Config;
+#[cfg(feature = "audio")]
+use async_openai::config::Config;
+#[cfg(feature = "audio")]
+use async_openai::types::CreateTranscriptionRequestArgs;
+#[cfg(feature = "audio")]
+use async_openai::Client;
 use futures::executor::block_on;
 use reqwest::Client as ReqwestClient;
 use std::{fmt, path::Path, sync::Arc};
 use tokio::sync::mpsc::UnboundedSender;
-use types::CreateTranscriptionRequestArgs;
 
 use crate::{Error, Result, SourceSize};
 
@@ -31,6 +34,7 @@ impl From<SourceSize> for OpenAiAudioSource {
     }
 }
 
+#[cfg(feature = "audio")]
 #[derive(Clone)]
 #[must_use]
 pub struct OpenAIWhisper<C: Config> {
@@ -38,6 +42,7 @@ pub struct OpenAIWhisper<C: Config> {
     source: OpenAiAudioSource,
 }
 
+#[cfg(feature = "audio")]
 impl<C: Config> OpenAIWhisper<C> {
     pub fn new(config: C) -> Self {
         Self::from(config, None, ReqwestClient::new(), Default::default())

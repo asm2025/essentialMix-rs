@@ -1,8 +1,8 @@
-use rand::{RngCore, SeedableRng};
-use rand_chacha::ChaCha20Rng;
+use crate::error::{CryptoError, Result};
 use crate::random::traits::RandomNumberGenerator;
 use crate::traits::Algorithm;
-use crate::error::{CryptoError, Result};
+use rand::{RngCore, SeedableRng};
+use rand_chacha::ChaCha20Rng;
 
 /// Cryptographically secure random number generator using ChaCha20
 pub struct RngCryptoServiceProvider {
@@ -11,13 +11,15 @@ pub struct RngCryptoServiceProvider {
 
 impl RngCryptoServiceProvider {
     pub fn new() -> Result<Self> {
-        let mut rng = ChaCha20Rng::from_entropy();
+        let rng = ChaCha20Rng::from_rng(&mut rand::rng());
         Ok(Self { rng })
     }
 
     pub fn from_seed(seed: &[u8]) -> Result<Self> {
         if seed.len() < 32 {
-            return Err(CryptoError::InvalidInput("Seed must be at least 32 bytes".to_string()));
+            return Err(CryptoError::InvalidInput(
+                "Seed must be at least 32 bytes".to_string(),
+            ));
         }
         let mut seed_array = [0u8; 32];
         seed_array[..seed.len().min(32)].copy_from_slice(&seed[..seed.len().min(32)]);
@@ -70,7 +72,9 @@ impl RandomNumberGenerator for RngCryptoServiceProvider {
 
     fn next_range(&mut self, min: u32, max: u32) -> Result<u32> {
         if min >= max {
-            return Err(CryptoError::InvalidInput("min must be less than max".to_string()));
+            return Err(CryptoError::InvalidInput(
+                "min must be less than max".to_string(),
+            ));
         }
         Ok(self.rng.next_u32() % (max - min) + min)
     }
@@ -81,4 +85,3 @@ impl RandomNumberGenerator for RngCryptoServiceProvider {
         Ok(buffer)
     }
 }
-

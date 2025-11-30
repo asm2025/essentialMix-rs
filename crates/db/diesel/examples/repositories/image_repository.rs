@@ -52,6 +52,7 @@ impl ImageRepository {
     }
 }
 
+#[allow(dead_code)]
 #[async_trait]
 pub trait TImageRepositoryExt {
     /// List all images with optional pagination

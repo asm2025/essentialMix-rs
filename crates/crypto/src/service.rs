@@ -125,7 +125,7 @@ impl QuickCipher {
         let encrypted_data = EncryptTrait::encrypt_string(&aes, value)?;
 
         // Encrypt the symmetric key with RSA
-        let mut rsa = RsaAlgorithm::new(2048)?;
+        let rsa = RsaAlgorithm::new(2048)?;
         let encrypted_key = EncryptTraitRsa::encrypt_bytes(&rsa, SymmetricAlgorithm::key(&aes))?;
 
         // Combine (simplified - in practice, use a proper format)
@@ -140,7 +140,7 @@ impl QuickCipher {
 
     /// Hybrid decryption: decrypt RSA-encrypted key, then decrypt data with symmetric
     #[cfg(all(feature = "aes", feature = "rsa"))]
-    pub fn hyper_decrypt(value: &str, rsa_private_key: &[u8]) -> Result<String> {
+    pub fn hyper_decrypt(value: &str, _rsa_private_key: &[u8]) -> Result<String> {
         // Parse combined format
         let parts: Vec<&str> = value.split(':').collect();
         if parts.len() != 2 {
@@ -154,7 +154,7 @@ impl QuickCipher {
         let encrypted_key = base64::engine::general_purpose::STANDARD
             .decode(parts[0])
             .map_err(|e| CryptoError::decryption(format!("Failed to decode key: {}", e)))?;
-        let mut rsa = RsaAlgorithm::new(2048)?;
+        let rsa = RsaAlgorithm::new(2048)?;
         let key = EncryptTraitRsa::decrypt_bytes(&rsa, &encrypted_key)?;
 
         // Decrypt the data

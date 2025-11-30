@@ -26,9 +26,8 @@ pub struct RsaAlgorithm {
 #[cfg(feature = "rsa")]
 impl RsaAlgorithm {
     pub fn new(key_size: usize) -> Result<Self> {
-        use rand::SeedableRng;
-        let mut rng = rand_chacha::ChaCha20Rng::from_entropy();
-        let private_key = RsaPrivateKey::new(&mut rng, key_size)
+        use rand_core::OsRng;
+        let private_key = RsaPrivateKey::new(&mut OsRng, key_size)
             .map_err(|e| CryptoError::key(format!("Failed to generate RSA key: {}", e)))?;
         let public_key = RsaPublicKey::from(&private_key);
 
@@ -119,18 +118,17 @@ impl Encrypt for RsaAlgorithm {
             .as_ref()
             .ok_or_else(|| CryptoError::NotInitialized("Public key not set".to_string()))?;
 
-        use rand::SeedableRng;
-        let mut rng = rand_chacha::ChaCha20Rng::from_entropy();
+        use rand_core::OsRng;
         let result = match self.padding {
             RSAPadding::Pkcs1 => {
                 let padding = Pkcs1v15Encrypt;
-                public_key.encrypt(&mut rng, padding, buffer)
+                public_key.encrypt(&mut OsRng, padding, buffer)
             }
             RSAPadding::Oaep => {
                 #[cfg(feature = "sha2")]
                 {
                     let padding = Oaep::new::<Sha256>();
-                    public_key.encrypt(&mut rng, padding, buffer)
+                    public_key.encrypt(&mut OsRng, padding, buffer)
                 }
                 #[cfg(not(feature = "sha2"))]
                 {
@@ -219,9 +217,8 @@ impl AsymmetricAlgorithm for RsaAlgorithm {
         }
         self.key_size = size;
         // Generate new keys
-        use rand::SeedableRng;
-        let mut rng = rand_chacha::ChaCha20Rng::from_entropy();
-        let private_key = RsaPrivateKey::new(&mut rng, size)
+        use rand_core::OsRng;
+        let private_key = RsaPrivateKey::new(&mut OsRng, size)
             .map_err(|e| CryptoError::key(format!("Failed to generate RSA key: {}", e)))?;
         let public_key = RsaPublicKey::from(&private_key);
         self.private_key = Some(private_key);
@@ -245,10 +242,7 @@ impl AsymmetricAlgorithm for RsaAlgorithm {
     }
 
     fn clear(&mut self) {
-        if let Some(ref mut key) = self.private_key {
-            // RSA keys don't implement Zeroize directly, but we can drop them
-            drop(key);
-        }
+        // RSA keys don't implement Zeroize directly, but we can drop them
         self.private_key = None;
         self.public_key = None;
     }

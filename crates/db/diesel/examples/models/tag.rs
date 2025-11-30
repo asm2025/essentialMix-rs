@@ -51,6 +51,7 @@ impl From<CreateTagDto> for NewTagModel {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct UpdateTagDto {
     pub name: Option<String>,

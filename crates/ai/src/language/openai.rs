@@ -1,5 +1,12 @@
-use async_openai::*;
-use config::Config;
+#[cfg(feature = "language")]
+use async_openai::Client;
+#[cfg(feature = "language")]
+use async_openai::config::Config;
+#[cfg(feature = "language")]
+use async_openai::types::chat::{
+    ChatCompletionRequestMessage, ChatCompletionRequestUserMessage,
+    ChatCompletionRequestUserMessageContent, CreateChatCompletionRequestArgs,
+};
 use futures::StreamExt;
 use kalosm::*;
 use reqwest::Client as ReqwestClient;
@@ -8,7 +15,6 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tokio::sync::mpsc::{Receiver, Sender, channel};
-use types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 
 use super::SourceSize;
 // Note: ModelSource import is commented out until OpenAiSourceModel implementation is completed
@@ -132,6 +138,7 @@ impl From<SourceSize> for OpenAiSource {
 //     }
 // }
 
+#[cfg(feature = "language")]
 #[derive(Clone)]
 #[must_use]
 pub struct ChatGpt<C: Config> {
@@ -142,6 +149,7 @@ pub struct ChatGpt<C: Config> {
     receiver: Arc<Mutex<Receiver<String>>>,
 }
 
+#[cfg(feature = "language")]
 impl<C: Config> ChatGpt<C> {
     pub fn new(config: C) -> Self {
         Self::from(
@@ -203,11 +211,12 @@ impl<C: Config> ChatGpt<C> {
             return Err(Error::NoInput);
         }
 
-        let messages = [ChatCompletionRequestUserMessageArgs::default()
-            .content(prompt)
-            .build()
-            .map_err(|e| Error::OpenAI(e.to_string()))?
-            .into()];
+        let user_message = ChatCompletionRequestUserMessage {
+            content: ChatCompletionRequestUserMessageContent::Text(prompt.to_string()),
+            name: None,
+        };
+        let messages = vec![ChatCompletionRequestMessage::User(user_message)];
+
         let request = CreateChatCompletionRequestArgs::default()
             .model(self.source.to_string())
             .max_tokens(self.max_tokens)

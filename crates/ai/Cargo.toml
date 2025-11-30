@@ -9,7 +9,7 @@ authors.workspace = true
 
 [dependencies]
 emix = { workspace = true}
-async-openai = { version = "0", optional = true }
+async-openai = { version = "0", features = ["chat-completion"], optional = true }
 backoff = "0"
 futures = "0"
 image = { version = "0.24.9", optional = true } # compatibility with Kalosm
