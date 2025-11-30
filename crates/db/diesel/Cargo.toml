@@ -10,20 +10,20 @@ authors.workspace = true
 [dependencies]
 emixcore = { workspace = true }
 emixdb = { workspace = true }
-async-trait = "0.1"
-chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0"
+chrono = { version = "0", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-diesel = { version = "2.2", features = ["chrono"] }
-diesel-async = { version = "0.5", features = ["deadpool"] }
-dotenvy = "0.15"
-libsqlite3-sys = { version = "0.30", features = ["bundled"], optional = true }
-pq-sys = { version = "0.6", features = ["bundled"], optional = true }
-openssl-sys = { version = "0.9.100", features = ["vendored"], optional = true } 
-mysqlclient-sys = { version = "0.4", features = ["bundled"], optional = true }
+diesel = { version = "2", features = ["chrono"] }
+diesel-async = { version = "0", features = ["deadpool"] }
+dotenvy = "0"
+libsqlite3-sys = { version = "0", features = ["bundled"], optional = true }
+pq-sys = { version = "0", features = ["bundled"], optional = true }
+openssl-sys = { version = "0", features = ["vendored"], optional = true } 
+mysqlclient-sys = { version = "0", features = ["bundled"], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-diesel_migrations = "2.2"
+diesel_migrations = "2"
 
 [features]
 default = ["sqlite-bundled"]
