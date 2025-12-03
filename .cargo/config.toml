@@ -1,0 +1,4 @@
+[build]
+# Suppress "function `...` is never used" noise during active development.
+rustflags = ["-Adead_code"]
+
