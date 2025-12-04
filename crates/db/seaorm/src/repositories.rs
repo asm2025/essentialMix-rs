@@ -113,7 +113,7 @@ pub trait THasDatabase {
 /// as this can cause excessive stack allocations when formatting. If debugging is required,
 /// consider using a custom `Debug` implementation or increasing stack size via `RUST_MIN_STACK`.
 #[async_trait]
-pub trait TRepository<E, U>: THasDatabase
+pub trait TRepository<E, U>
 where
     E: EntityTrait + Send + Sync,
     U: TMerge<<E as EntityTrait>::ActiveModel> + Send + Sync,

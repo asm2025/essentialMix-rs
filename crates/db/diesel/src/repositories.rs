@@ -57,19 +57,17 @@ where
 /// - `M`: The model type (e.g., `User`)
 /// - `U`: The update DTO type
 /// - `I`: The ID type (e.g., `i64`)
-/// - `Conn`: The connection type (e.g., `AsyncSqliteConnection`)
 ///
 /// # Performance Note
 /// Avoid deriving `Debug` for types that hold `Arc<dyn TRepository<...>>` trait objects,
 /// as this can cause excessive stack allocations when formatting. If debugging is required,
 /// consider using a custom `Debug` implementation or increasing stack size via `RUST_MIN_STACK`.
 #[async_trait]
-pub trait TRepository<M, U, I, Conn>: THasConnection<Conn>
+pub trait TRepository<M, U, I>
 where
     M: Send + Sync,
     U: Send + Sync,
     I: Send + Sync,
-    Conn: AsyncConnection + 'static,
 {
     /// List all entities with optional pagination
     /// Filtering should be implemented in the repository implementation
@@ -99,20 +97,18 @@ where
 /// - `U`: The update DTO type (main entity)
 /// - `R`: The related model type
 /// - `I`: The ID type
-/// - `Conn`: The connection type
 ///
 /// # Performance Note
 /// Avoid deriving `Debug` for types that hold `Arc<dyn TRepositoryWithRelated<...>>` trait objects,
 /// as this can cause excessive stack allocations when formatting. If debugging is required,
 /// consider using a custom `Debug` implementation or increasing stack size via `RUST_MIN_STACK`.
 #[async_trait]
-pub trait TRepositoryWithRelated<M, U, R, I, Conn>: TRepository<M, U, I, Conn>
+pub trait TRepositoryWithRelated<M, U, R, I>: TRepository<M, U, I>
 where
     M: Send + Sync,
     U: Send + Sync,
     R: Send + Sync,
     I: Send + Sync,
-    Conn: AsyncConnection + 'static,
 {
     /// List entities with their related entities
     /// Filtering should be implemented in the repository implementation
