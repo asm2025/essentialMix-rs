@@ -6,9 +6,9 @@ consistent across database backends.
 
 ## Feature Flags
 
-- `sqlite`, `postgres`, `mysql`: Pick your database driver.
-- `mariadb`: Alias for the MySQL stack.
-- `full`: Enable every supported backend.
+-   `sqlite`, `postgres`, `mysql`: Pick your database driver.
+-   `mariadb`: Alias for the MySQL stack.
+-   `full`: Enable every supported backend.
 
 ```toml
 [dependencies]
@@ -29,10 +29,5 @@ let query = filter.apply(posts::Entity::find());
 let published = query.all(&db).await?;
 ```
 
-- Combine `TFilterCondition` and `TFilterRelatedCondition` to express joins.
-- Leverage `TRepository` and `TRepositoryWithRelated` to share CRUD logic across
-  entities.
-- Reuse `emixdb::dto::{Pagination, ResultSet}` for consistent API responses.
-- Check the `examples/` directory for a runnable SeaORM + migration showcase.
-
-
+-   Combine `TFilterCondition` and `TFilterRelatedCondition` to express joins.
+-   Reuse `emixdb::dto::{Pagination, ResultSet}` for consistent API responses.

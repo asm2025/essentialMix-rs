@@ -6,11 +6,11 @@ rest of EssentialMix.
 
 ## Feature Flags
 
-- `sqlite` / `postgres` / `mysql`: Enable the respective Diesel backends.
-- `sqlite-bundled`, `postgres-bundled`, `mysql-bundled`: Pull in vendored client
-  libraries so you can build without system dependencies.
-- `full`: Turn on every backend (non-bundled).
-- `full-bundled`: Turn on every backend with vendored client libraries.
+-   `sqlite` / `postgres` / `mysql`: Enable the respective Diesel backends.
+-   `sqlite-bundled`, `postgres-bundled`, `mysql-bundled`: Pull in vendored client
+    libraries so you can build without system dependencies.
+-   `full`: Turn on every backend (non-bundled).
+-   `full-bundled`: Turn on every backend with vendored client libraries.
 
 ```toml
 [dependencies]
@@ -21,7 +21,7 @@ emixdiesel = { path = "../../crates/db/diesel", features = ["postgres"] }
 
 ```rust
 use emixdiesel::prelude::*;
-use emixdiesel::repositories::{ClosureFilter, TFilterQuery};
+use emixdiesel::{ClosureFilter, TFilterQuery};
 use crate::schema::posts::dsl::*;
 
 // Start from any boxed Diesel query (useful inside repositories).
@@ -32,10 +32,3 @@ let only_published = ClosureFilter::new(|q| q.filter(published.eq(true)));
 
 let filtered = only_published.apply(query);
 ```
-
-Pair this with `emixdb::dto::Pagination` and the `TRepository` traits in
-`src/repositories.rs` to implement reusable CRUD layers. See the `examples/`
-folder for complete Diesel + async runtime demos, including migrations for
-SQLite, PostgreSQL, and MySQL.
-
-
