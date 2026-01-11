@@ -110,7 +110,10 @@ cargo publish %publish_opts% > "%log_file%" 2>&1
 set "cargo_ec=%errorlevel%"
 type "%log_file%"
 if not "%cargo_ec%"=="0" goto publish_failed
+REM Don't delay after the last crate
+if "%~3"=="%~4" goto publish_done
 if %delay_seconds% GTR 0 call :sleep %delay_seconds%
+:publish_done
 echo.
 exit /b 0
 
