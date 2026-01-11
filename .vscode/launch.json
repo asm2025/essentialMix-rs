@@ -9,9 +9,9 @@
             "request": "launch",
             "name": "Debug",
             "cargo": {
-                "args": ["build", "--bin=testapp"],
+                "args": ["build", "--bin=essentialmix-rs"],
                 "filter": {
-                    "name": "testapp",
+                    "name": "essentialmix-rs",
                     "kind": "bin"
                 }
             },
@@ -21,16 +21,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Test 'essentialMix'",
+            "name": "Test 'essentialmix-rs'",
             "cargo": {
-                "args": ["test", "--no-run", "--lib", "--package=essentialMix"],
+                "args": ["test", "--no-run", "--lib", "--package=essentialmix-rs"],
                 "filter": {
-                    "name": "essentialMix",
+                    "name": "essentialmix-rs",
                     "kind": "lib"
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}/essentialMix"
+            "cwd": "${workspaceFolder}/essentialmix-rs"
         }
     ]
 }

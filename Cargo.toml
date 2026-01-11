@@ -1,9 +1,12 @@
 [package]
-name = "testapp"
+name = "essentialmix-rs"
+description = "A comprehensive Rust library workspace containing multiple utility crates for common development tasks."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -32,19 +35,21 @@ version = "0.6.0"
 edition = "2024"
 license = "MIT"
 authors = ["asm <asm2025@outlook.com>"]
+repository = "https://github.com/asm2025/essentialmix-rs"
+readme = "https://github.com/asm2025/essentialmix-rs"
 
 [workspace.dependencies]
-emixai = { path = "crates/ai" }
-emix = { path = "crates/base" }
-emixcore = { path = "crates/core" }
-emixdb = { path = "crates/db/common" }
-emixdiesel = { path = "crates/db/diesel" }
-emixseaorm = { path = "crates/db/seaorm" }
-emixlog = { path = "crates/log" }
-emixnet = { path = "crates/net" }
-emixthreading = { path = "crates/threading" }
-emixcollections = { path = "crates/collections" }
-emixcrypto = { path = "crates/crypto" }
+emixai = { path = "crates/ai", version = "0.6.0" }
+emix = { path = "crates/base", version = "0.6.0" }
+emixcore = { path = "crates/core", version = "0.6.0" }
+emixdb = { path = "crates/db/common", version = "0.6.0" }
+emixdiesel = { path = "crates/db/diesel", version = "0.6.0" }
+emixseaorm = { path = "crates/db/seaorm", version = "0.6.0" }
+emixlog = { path = "crates/log", version = "0.6.0" }
+emixnet = { path = "crates/net", version = "0.6.0" }
+emixthreading = { path = "crates/threading", version = "0.6.0" }
+emixcollections = { path = "crates/collections", version = "0.6.0" }
+emixcrypto = { path = "crates/crypto", version = "0.6.0" }
 parking_lot = "0"
 
 [profile.dist]

@@ -184,14 +184,15 @@ impl<C: Config> ChatGpt<C> {
     pub fn from(
         config: C,
         source: Option<OpenAiSource>,
-        client: ReqwestClient,
-        backoff: backoff::ExponentialBackoff,
+        _client: ReqwestClient,
+        _backoff: backoff::ExponentialBackoff,
         capacity: Option<usize>,
     ) -> Self {
         let capacity = cmp::max(capacity.unwrap_or(128), 4);
         let (sender, receiver) = channel(capacity);
+        let client: Client<C> = Client::with_config(config);
         Self {
-            client: Arc::new(Client::build(client, config, backoff)),
+            client: Arc::new(client),
             source: source.unwrap_or_default(),
             max_tokens: 1024u32,
             sender,
