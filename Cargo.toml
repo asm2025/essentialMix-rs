@@ -36,7 +36,7 @@ edition = "2024"
 license = "MIT"
 authors = ["asm <asm2025@outlook.com>"]
 repository = "https://github.com/asm2025/essentialmix-rs"
-readme = "https://github.com/asm2025/essentialmix-rs"
+readme = "README.md"
 
 [workspace.dependencies]
 emixai = { path = "crates/ai", version = "0.6.0" }
