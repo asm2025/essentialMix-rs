@@ -22,6 +22,7 @@ if /i "%~1"=="-s" set "start_step=%~2" & shift & shift & goto parse_args
 if /i "%~1"=="--step" set "start_step=%~2" & shift & shift & goto parse_args
 if /i "%~1"=="-d" set "delay_seconds=%~2" & shift & shift & goto parse_args
 if /i "%~1"=="--delay" set "delay_seconds=%~2" & shift & shift & goto parse_args
+if /i "%~1"=="-r" set "retry_max=%~2" & shift & shift & goto parse_args
 if /i "%~1"=="--retry" set "retry_max=%~2" & shift & shift & goto parse_args
 if /i "%~1"=="-w" set "retry_wait_seconds=%~2" & shift & shift & goto parse_args
 if /i "%~1"=="--wait" set "retry_wait_seconds=%~2" & shift & shift & goto parse_args
@@ -106,15 +107,16 @@ set "attempt=0"
 set /a attempt=attempt+1
 set "log_file=%TEMP%\emix_publish_%~2.log"
 cargo publish %publish_opts% > "%log_file%" 2>&1
+set "cargo_ec=%errorlevel%"
 type "%log_file%"
-if errorlevel 1 goto publish_failed
+if not "%cargo_ec%"=="0" goto publish_failed
 if %delay_seconds% GTR 0 call :sleep %delay_seconds%
 echo.
 exit /b 0
 
 :publish_failed
 REM Treat "already published" as success to allow resume without -step
-findstr /i /c:"already uploaded" /c:"already exists" /c:"already been uploaded" "%log_file%" >nul
+findstr /i "already" "%log_file%" | findstr /i /c:"uploaded" /c:"exists" >nul
 if errorlevel 1 goto publish_failed_429_check
 echo.
 echo %~2 already published on crates.io. Skipping.
@@ -126,13 +128,33 @@ findstr /i /c:"status 429" "%log_file%" >nul
 if errorlevel 1 goto publish_failed_final
 echo.
 echo Hit crates.io rate limit (429 Too Many Requests).
-if %retry_max% LEQ 0 goto publish_failed_final
-if %attempt% GEQ %retry_max% goto publish_failed_final
+REM Extract retry-after time from error message if present
+findstr /i /c:"Please try again after" "%log_file%" >nul
+if not errorlevel 1 (
+	echo.
+	findstr /i /c:"Please try again after" "%log_file%"
+	echo.
+)
+if %retry_max% LEQ 0 (
+	echo.
+	echo Retry is disabled (--retry not specified). Stopping.
+	echo Use --retry COUNT to enable automatic retries, or wait and rerun later.
+	echo.
+	exit /b 1
+)
+if %attempt% GEQ %retry_max% (
+	echo.
+	echo Retry limit reached (%retry_max% attempts). Stopping.
+	echo You may need to wait and rerun later, or increase --retry COUNT.
+	echo.
+	exit /b 1
+)
 echo Waiting %retry_wait_seconds%s then retrying (%attempt%/%retry_max%)...
 call :sleep %retry_wait_seconds%
 goto publish_try
 
 :publish_failed_final
+echo.
 echo Failed to publish %~2
 exit /b 1
 
@@ -154,7 +176,7 @@ echo Options:
 echo   -c, --check                        Dry-run: `cargo publish --dry-run` (no upload).
 echo   -s N, --step N                     Resume from step N (1..11). Default: 1
 echo   -d SECONDS, --delay SECONDS        Wait between crates. Default: 0
-echo   --retry COUNT                      Retry on crates.io 429. Default: 0
+echo   -r COUNT, --retry COUNT            Retry on crates.io 429. Default: 0
 echo   -w SECONDS, --wait SECONDS         Wait between retries. Default: 60
 echo   -h, --help, /?                     Show this help
 echo.
