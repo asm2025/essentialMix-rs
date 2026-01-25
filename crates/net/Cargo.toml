@@ -20,7 +20,7 @@ http-body-util = "0"
 lettre = { version = "0", optional = true }
 once_cell = { version = "1", optional = true }
 regex = "1"
-reqwest = { version = "0", features = ["blocking", "cookies", "http2", "json", "gzip", "deflate", "brotli", "zstd", "multipart", "socks", "stream"] }
+reqwest = { version = "0", features = ["blocking", "cookies", "http3", "json", "gzip", "deflate", "brotli", "multipart", "socks", "stream"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 time = "0"
