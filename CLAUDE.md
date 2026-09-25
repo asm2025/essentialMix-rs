@@ -19,7 +19,7 @@ cargo test -p emixai --features audio -- --ignored   # manual tests (need API ke
 cargo test -p emixdiesel --features postgres  # feature-gated code needs its feature enabled
 ```
 
-- Tests live in `crates/*/tests/*.rs` (integration tests), not inline modules. `emixcrypto` currently has no tests.
+- Tests live in `crates/*/tests/*.rs` (integration tests), not inline modules.
 - Tests marked `#[ignore]` require external resources (OpenAI key, model downloads, network, mail/VPN). Their comments give the exact run command.
 - `.cargo/config.toml` sets `-Adead_code` globally, so unused-code warnings are suppressed.
 - `publish.bat` (Windows) publishes crates in dependency order: core, base, db/common, collections, crypto, threading, log, net, ai, db/diesel, db/seaorm. Options: `-c` dry-run, `-s N` resume at step N, `-d` delay between crates, `-r`/`-w` retry count/wait. Dry-run fails for dependents until their dependencies are actually published.
@@ -45,7 +45,7 @@ Key conventions spanning crates:
 
 - **Shared error type**: `emixcore::Error` (big `thiserror` enum) and `emixcore::Result<T>`. Most crates re-export them as `pub use emixcore::{Error, Result}`. Crates with domain errors (`net`, `log`, `crypto`) define their own enum (e.g. `NetError`, `LogError`) plus `impl From<XError> for emixcore::Error`.
 - **Global debug flag**: `emixcore::set_debug` / `is_debug` (a `OnceLock`, so it can be set only once). With debug on, `emixcore::system::num_cpus()` returns 1, which makes threading code run single-threaded.
-- **Feature-gated modules**: optional functionality is behind Cargo features and `#[cfg(feature = "...")]` modules. Most crates have a `full` feature. Notable defaults: `emixai` = `language` (kalosm + async-openai; `cuda`/`metal`/`mkl` for acceleration), `emixlog` = `log4rs` (alt `slog`), `emixcrypto` = aes/cbc/rsa/sha2/pbkdf2, `emixdiesel` = `sqlite-bundled` (`*-bundled` variants vendor native client libs), `emixseaorm` = `sqlite`. `emix` has `terminal` and `fake`; `emixnet` has `mail` (enables `emix/fake`) and `vpn`.
+- **Feature-gated modules**: optional functionality is behind Cargo features and `#[cfg(feature = "...")]` modules. Most crates have a `full` feature. Notable defaults: `emixai` = `language` (kalosm + async-openai; `cuda`/`metal`/`mkl` for acceleration), `emixlog` = `log4rs` (alt `slog`), `emixcrypto` = aes/cbc/rsa/pbkdf2 (`sha2` is always on; the feature is a no-op kept for compatibility), `emixdiesel` = `sqlite-bundled` (`*-bundled` variants vendor native client libs), `emixseaorm` = `sqlite`. `emix` has `terminal` and `fake`; `emixnet` has `mail` (enables `emix/fake`) and `vpn`.
 - **DB layer**: `emixdb` holds backend-agnostic DTOs/models. `emixdiesel` and `emixseaorm` each mirror that layout (`dto.rs`, `models.rs`) and add backend-specific repository/filter traits (e.g. `TFilterQuery`, `TFilterCondition` in SeaORM).
 
 ## Versioning

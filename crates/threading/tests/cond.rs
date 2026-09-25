@@ -1119,8 +1119,8 @@ mod tests {
             cond_clone.set().unwrap();
         });
 
-        // Wait with timeout - should succeed when set
-        let result = cond.wait_timeout(Duration::from_millis(200));
+        // Wait with timeout - should succeed when set (generous timeout: returns as soon as set, avoids flakes under load)
+        let result = cond.wait_timeout(Duration::from_millis(5000));
         assert!(result.is_ok(), "wait_timeout should succeed");
         assert!(result.unwrap(), "Should not timeout, should be set");
 

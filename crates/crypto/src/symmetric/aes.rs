@@ -7,7 +7,7 @@ use crate::random::traits::RandomNumberGenerator;
 use crate::random::rng::RngCryptoServiceProvider;
 #[cfg(feature = "pbkdf2")]
 use pbkdf2::pbkdf2_hmac;
-#[cfg(feature = "sha2")]
+#[cfg(feature = "pbkdf2")]
 use sha2::Sha256;
 #[cfg(all(feature = "aes", feature = "cbc"))]
 use cbc::cipher::{
@@ -131,6 +131,7 @@ impl Encrypt for AesAlgorithm {
     }
 
     fn encrypt_bytes(&self, buffer: &[u8]) -> Result<Vec<u8>> {
+        #[cfg_attr(not(feature = "cbc"), allow(unused_variables))]
         let iv = self.key_and_iv()?;
         // NoPadding panics inside the cipher on partial blocks, so reject them up front
         if self.padding == PaddingMode::NoPadding && buffer.len() % 16 != 0 {
@@ -165,6 +166,7 @@ impl Encrypt for AesAlgorithm {
     }
 
     fn decrypt_bytes(&self, buffer: &[u8]) -> Result<Vec<u8>> {
+        #[cfg_attr(not(feature = "cbc"), allow(unused_variables))]
         let iv = self.key_and_iv()?;
         if buffer.len() % 16 != 0 {
             return Err(CryptoError::decryption("Ciphertext length must be multiple of block size".to_string()));
@@ -287,13 +289,13 @@ impl SymmetricAlgorithm for AesAlgorithm {
         Ok(())
     }
 
+    #[cfg_attr(not(feature = "pbkdf2"), allow(unused_variables))]
     fn generate_key_from_passphrase(&mut self, passphrase: &str, salt: Option<&[u8]>, iterations: u32) -> Result<()> {
         #[cfg(feature = "pbkdf2")]
         {
             let salt = salt.unwrap_or(&[0u8; 8]);
             let key_len = self.key_size / 8;
             let mut key = vec![0u8; key_len];
-            #[cfg(feature = "sha2")]
             pbkdf2_hmac::<Sha256>(passphrase.as_bytes(), salt, iterations, &mut key);
             self.key = key;
             Ok(())

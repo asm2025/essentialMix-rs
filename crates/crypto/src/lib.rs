@@ -23,10 +23,12 @@
 //! // Base64 encode
 //! let encoded = QuickCipher::base64_encode("Hello, World!")?;
 //!
-//! // Encrypt with symmetric encryption
+//! // Encrypt with symmetric encryption (requires the `aes` feature)
+//! # #[cfg(feature = "aes")] {
 //! let encrypted = QuickCipher::symmetric_encrypt("secret message", "my-key")?;
 //! let decrypted = QuickCipher::symmetric_decrypt(&encrypted, "my-key")?;
 //! assert_eq!(decrypted, "secret message");
+//! # }
 //! # Ok::<(), emixcrypto::CryptoError>(())
 //! ```
 

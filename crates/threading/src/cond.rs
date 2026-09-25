@@ -71,28 +71,16 @@ impl AutoResetCond {
     /// Returns Ok(true) if the event was set, Ok(false) if the timeout expired.
     pub fn wait_timeout(&self, timeout: Duration) -> Result<bool> {
         let (lock, cvar) = &*self.pair;
-        let mut guard = Error::handle_poison_error(lock.lock())?;
+        let guard = Error::handle_poison_error(lock.lock())?;
 
-        // Check if already set before waiting
-        if *guard {
-            *guard = false; // Auto-reset
-            return Ok(true);
-        }
-
-        let (mut new_guard, result) =
-            Error::handle_poison_error(cvar.wait_timeout(guard, timeout))?;
-
-        if result.timed_out() {
-            return Ok(false);
-        }
+        // wait_timeout_while re-waits on spurious wakeups until the deadline
+        let (mut guard, _) =
+            Error::handle_poison_error(cvar.wait_timeout_while(guard, timeout, |set| !*set))?;
 
         // Auto-reset: consume the signal if it was set
-        if *new_guard {
-            *new_guard = false;
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        let was_set = *guard;
+        *guard = false;
+        Ok(was_set)
     }
 
     /// Waits for the event to be set, with a timeout in milliseconds.
@@ -216,19 +204,10 @@ impl ManualResetCond {
         let (lock, cvar) = &*self.pair;
         let guard = Error::handle_poison_error(lock.lock())?;
 
-        // Check if already set before waiting
-        if *guard {
-            return Ok(true);
-        }
-
-        let (new_guard, result) = Error::handle_poison_error(cvar.wait_timeout(guard, timeout))?;
-
-        if result.timed_out() {
-            return Ok(false);
-        }
-
-        // Check if event was set
-        Ok(*new_guard)
+        // wait_timeout_while re-waits on spurious wakeups until the deadline
+        let (guard, _) =
+            Error::handle_poison_error(cvar.wait_timeout_while(guard, timeout, |set| !*set))?;
+        Ok(*guard)
     }
 
     /// Waits for the event to be set, with a timeout in milliseconds.
@@ -393,19 +372,11 @@ impl CountdownCond {
         let (lock, cvar) = &*self.pair;
         let guard = Error::handle_poison_error(lock.lock())?;
 
-        // Check if already at zero before waiting
-        if guard.count == 0 {
-            return Ok(true);
-        }
-
-        let (new_guard, result) = Error::handle_poison_error(cvar.wait_timeout(guard, timeout))?;
-
-        if result.timed_out() {
-            return Ok(false);
-        }
-
-        // Check if count reached zero
-        Ok(new_guard.count == 0)
+        // wait_timeout_while re-waits on spurious wakeups until the deadline
+        let (guard, _) = Error::handle_poison_error(
+            cvar.wait_timeout_while(guard, timeout, |inner| inner.count != 0),
+        )?;
+        Ok(guard.count == 0)
     }
 
     /// Waits until the count reaches zero, with a timeout in milliseconds.

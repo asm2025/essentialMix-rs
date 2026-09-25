@@ -1,4 +1,5 @@
 pub mod traits;
+#[cfg(feature = "rsa")]
 pub mod rsa;
 pub mod settings;
 

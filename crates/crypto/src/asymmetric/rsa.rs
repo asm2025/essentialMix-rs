@@ -8,7 +8,6 @@ use crate::traits::{Algorithm, EncodingConfig, Encrypt};
 #[cfg(feature = "rsa")]
 use rsa::{Oaep, Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 #[cfg(feature = "rsa")]
-#[cfg(feature = "sha2")]
 use rsa::sha2::Sha256; // rsa pins its own digest version; the workspace sha2 may differ
 
 /// RSA asymmetric encryption implementation
@@ -70,6 +69,85 @@ impl RsaAlgorithm {
             hash_algorithm: HashAlg::Sha1,
         }
     }
+
+    /// Loads a public key from DER or PEM bytes, as SPKI (`PUBLIC KEY`) or PKCS#1 (`RSA PUBLIC KEY`).
+    pub fn from_public_key_bytes(key: &[u8]) -> Result<Self> {
+        use rsa::pkcs1::DecodeRsaPublicKey;
+        use rsa::pkcs8::DecodePublicKey;
+        let public_key = match as_pem(key) {
+            Some(pem) => RsaPublicKey::from_public_key_pem(pem).or_else(|_| RsaPublicKey::from_pkcs1_pem(pem)),
+            None => RsaPublicKey::from_public_key_der(key).or_else(|_| RsaPublicKey::from_pkcs1_der(key)),
+        }
+        .map_err(|e| CryptoError::key(format!("Invalid RSA public key: {}", e)))?;
+        Ok(Self::from_public_key(public_key))
+    }
+
+    /// Loads a private key from DER or PEM bytes, as PKCS#8 (`PRIVATE KEY`) or PKCS#1 (`RSA PRIVATE KEY`).
+    pub fn from_private_key_bytes(key: &[u8]) -> Result<Self> {
+        use rsa::pkcs1::DecodeRsaPrivateKey;
+        use rsa::pkcs8::DecodePrivateKey;
+        let private_key = match as_pem(key) {
+            Some(pem) => RsaPrivateKey::from_pkcs8_pem(pem).or_else(|_| RsaPrivateKey::from_pkcs1_pem(pem)),
+            None => RsaPrivateKey::from_pkcs8_der(key).or_else(|_| RsaPrivateKey::from_pkcs1_der(key)),
+        }
+        .map_err(|e| CryptoError::key(format!("Invalid RSA private key: {}", e)))?;
+        Ok(Self::from_private_key(private_key))
+    }
+
+    /// Exports the public key as SPKI DER.
+    pub fn public_key_der(&self) -> Result<Vec<u8>> {
+        use rsa::pkcs8::EncodePublicKey;
+        self.require_public_key()?
+            .to_public_key_der()
+            .map(|doc| doc.into_vec())
+            .map_err(|e| CryptoError::key(format!("Failed to encode RSA public key: {}", e)))
+    }
+
+    /// Exports the public key as SPKI PEM.
+    pub fn public_key_pem(&self) -> Result<String> {
+        use rsa::pkcs8::{EncodePublicKey, LineEnding};
+        self.require_public_key()?
+            .to_public_key_pem(LineEnding::LF)
+            .map_err(|e| CryptoError::key(format!("Failed to encode RSA public key: {}", e)))
+    }
+
+    /// Exports the private key as PKCS#8 DER.
+    pub fn private_key_der(&self) -> Result<Vec<u8>> {
+        use rsa::pkcs8::EncodePrivateKey;
+        self.require_private_key()?
+            .to_pkcs8_der()
+            .map(|doc| doc.as_bytes().to_vec())
+            .map_err(|e| CryptoError::key(format!("Failed to encode RSA private key: {}", e)))
+    }
+
+    /// Exports the private key as PKCS#8 PEM.
+    pub fn private_key_pem(&self) -> Result<String> {
+        use rsa::pkcs8::{EncodePrivateKey, LineEnding};
+        self.require_private_key()?
+            .to_pkcs8_pem(LineEnding::LF)
+            .map(|pem| pem.to_string())
+            .map_err(|e| CryptoError::key(format!("Failed to encode RSA private key: {}", e)))
+    }
+
+    fn require_public_key(&self) -> Result<&RsaPublicKey> {
+        self.public_key
+            .as_ref()
+            .ok_or_else(|| CryptoError::NotInitialized("Public key not set".to_string()))
+    }
+
+    fn require_private_key(&self) -> Result<&RsaPrivateKey> {
+        self.private_key
+            .as_ref()
+            .ok_or_else(|| CryptoError::NotInitialized("Private key not set".to_string()))
+    }
+}
+
+/// Returns the key as text when it looks PEM-encoded, otherwise `None` (treat as DER).
+#[cfg(feature = "rsa")]
+fn as_pem(key: &[u8]) -> Option<&str> {
+    std::str::from_utf8(key)
+        .ok()
+        .filter(|s| s.trim_start().starts_with("-----BEGIN"))
 }
 
 #[cfg(feature = "rsa")]
@@ -125,17 +203,8 @@ impl Encrypt for RsaAlgorithm {
                 public_key.encrypt(&mut OsRng, padding, buffer)
             }
             RSAPadding::Oaep => {
-                #[cfg(feature = "sha2")]
-                {
-                    let padding = Oaep::new::<Sha256>();
-                    public_key.encrypt(&mut OsRng, padding, buffer)
-                }
-                #[cfg(not(feature = "sha2"))]
-                {
-                    return Err(CryptoError::encryption(
-                        "OAEP requires sha2 feature".to_string(),
-                    ));
-                }
+                let padding = Oaep::new::<Sha256>();
+                public_key.encrypt(&mut OsRng, padding, buffer)
             }
         };
         result.map_err(|e| CryptoError::encryption(format!("RSA encryption failed: {}", e)))
@@ -170,17 +239,8 @@ impl Encrypt for RsaAlgorithm {
                 private_key.decrypt(padding, buffer)
             }
             RSAPadding::Oaep => {
-                #[cfg(feature = "sha2")]
-                {
-                    let padding = Oaep::new::<Sha256>();
-                    private_key.decrypt(padding, buffer)
-                }
-                #[cfg(not(feature = "sha2"))]
-                {
-                    return Err(CryptoError::decryption(
-                        "OAEP requires sha2 feature".to_string(),
-                    ));
-                }
+                let padding = Oaep::new::<Sha256>();
+                private_key.decrypt(padding, buffer)
             }
         };
         result.map_err(|e| CryptoError::decryption(format!("RSA decryption failed: {}", e)))

@@ -14,7 +14,6 @@ fn test_rsa_pkcs1_round_trip() {
     assert_eq!(rsa.decrypt_string(&encrypted).unwrap(), "hello rsa");
 }
 
-#[cfg(feature = "sha2")]
 #[test]
 fn test_rsa_oaep_round_trip() {
     let mut rsa = RsaAlgorithm::new(TEST_KEY_BITS).unwrap();
@@ -72,4 +71,111 @@ fn test_rsa_clear_removes_keys() {
     AsymmetricAlgorithm::clear(&mut rsa);
     assert!(rsa.encrypt_bytes(b"x").is_err());
     assert!(rsa.decrypt_bytes(&[0u8; TEST_KEY_BITS / 8]).is_err());
+}
+
+#[test]
+fn test_rsa_der_export_import_round_trip() {
+    let original = RsaAlgorithm::new(TEST_KEY_BITS).unwrap();
+    let public = RsaAlgorithm::from_public_key_bytes(&original.public_key_der().unwrap()).unwrap();
+    let private = RsaAlgorithm::from_private_key_bytes(&original.private_key_der().unwrap()).unwrap();
+
+    let encrypted = public.encrypt_bytes(b"der keys").unwrap();
+    assert_eq!(private.decrypt_bytes(&encrypted).unwrap(), b"der keys");
+    assert_eq!(private.public_key_der().unwrap(), original.public_key_der().unwrap());
+}
+
+#[test]
+fn test_rsa_pem_export_import_round_trip() {
+    let original = RsaAlgorithm::new(TEST_KEY_BITS).unwrap();
+    let public_pem = original.public_key_pem().unwrap();
+    let private_pem = original.private_key_pem().unwrap();
+    assert!(public_pem.starts_with("-----BEGIN PUBLIC KEY-----"));
+    assert!(private_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
+
+    let public = RsaAlgorithm::from_public_key_bytes(public_pem.as_bytes()).unwrap();
+    let private = RsaAlgorithm::from_private_key_bytes(private_pem.as_bytes()).unwrap();
+    let encrypted = public.encrypt_bytes(b"pem keys").unwrap();
+    assert_eq!(private.decrypt_bytes(&encrypted).unwrap(), b"pem keys");
+}
+
+#[test]
+fn test_rsa_pkcs1_pem_import() {
+    use rsa::pkcs1::{EncodeRsaPrivateKey, EncodeRsaPublicKey, LineEnding};
+    let key = rsa::RsaPrivateKey::new(&mut rand_core::OsRng, TEST_KEY_BITS).unwrap();
+    let private_pem = key.to_pkcs1_pem(LineEnding::LF).unwrap();
+    let public_pem = rsa::RsaPublicKey::from(&key).to_pkcs1_pem(LineEnding::LF).unwrap();
+
+    let public = RsaAlgorithm::from_public_key_bytes(public_pem.as_bytes()).unwrap();
+    let private = RsaAlgorithm::from_private_key_bytes(private_pem.as_bytes()).unwrap();
+    let encrypted = public.encrypt_bytes(b"pkcs1").unwrap();
+    assert_eq!(private.decrypt_bytes(&encrypted).unwrap(), b"pkcs1");
+}
+
+#[test]
+fn test_rsa_invalid_key_bytes() {
+    assert!(RsaAlgorithm::from_public_key_bytes(b"not a key").is_err());
+    assert!(RsaAlgorithm::from_private_key_bytes(b"-----BEGIN PRIVATE KEY-----\ngarbage\n-----END PRIVATE KEY-----").is_err());
+}
+
+#[test]
+fn test_rsa_public_only_cannot_export_private() {
+    let original = RsaAlgorithm::new(TEST_KEY_BITS).unwrap();
+    let public = RsaAlgorithm::from_public_key_bytes(&original.public_key_der().unwrap()).unwrap();
+    assert!(public.private_key_der().is_err());
+    assert!(public.private_key_pem().is_err());
+}
+
+mod quick_cipher {
+    use super::TEST_KEY_BITS;
+    use emixcrypto::QuickCipher;
+
+    #[test]
+    fn test_generate_asymmetric_keys_returns_der() {
+        let (public, private) = QuickCipher::generate_asymmetric_keys(TEST_KEY_BITS).unwrap();
+        assert!(!public.is_empty());
+        assert!(!private.is_empty());
+        assert_ne!(public, private);
+    }
+
+    #[test]
+    fn test_asymmetric_round_trip() {
+        let (public, private) = QuickCipher::generate_asymmetric_keys(TEST_KEY_BITS).unwrap();
+        let encrypted = QuickCipher::asymmetric_encrypt("hello rsa", &public).unwrap();
+        assert_eq!(QuickCipher::asymmetric_decrypt(&encrypted, &private).unwrap(), "hello rsa");
+    }
+
+    #[test]
+    fn test_asymmetric_wrong_private_key_fails() {
+        let (public, _) = QuickCipher::generate_asymmetric_keys(TEST_KEY_BITS).unwrap();
+        let (_, other_private) = QuickCipher::generate_asymmetric_keys(TEST_KEY_BITS).unwrap();
+        let encrypted = QuickCipher::asymmetric_encrypt("hello rsa", &public).unwrap();
+        assert!(QuickCipher::asymmetric_decrypt(&encrypted, &other_private).is_err());
+    }
+
+    #[test]
+    fn test_asymmetric_rejects_bad_key() {
+        assert!(QuickCipher::asymmetric_encrypt("x", b"bad").is_err());
+        assert!(QuickCipher::asymmetric_decrypt("AAAA", b"bad").is_err());
+    }
+
+    #[cfg(all(feature = "aes", feature = "cbc"))]
+    #[test]
+    fn test_hyper_round_trip_long_message() {
+        let (public, private) = QuickCipher::generate_asymmetric_keys(TEST_KEY_BITS).unwrap();
+        // Far longer than a single RSA block can hold
+        let message = "hybrid ".repeat(500);
+        let encrypted = QuickCipher::hyper_encrypt(&message, &public).unwrap();
+        assert_eq!(encrypted.matches(':').count(), 1);
+        assert_eq!(QuickCipher::hyper_decrypt(&encrypted, &private).unwrap(), message);
+    }
+
+    #[cfg(all(feature = "aes", feature = "cbc"))]
+    #[test]
+    fn test_hyper_wrong_key_and_bad_format() {
+        let (public, _) = QuickCipher::generate_asymmetric_keys(TEST_KEY_BITS).unwrap();
+        let (_, other_private) = QuickCipher::generate_asymmetric_keys(TEST_KEY_BITS).unwrap();
+        let encrypted = QuickCipher::hyper_encrypt("secret", &public).unwrap();
+        assert!(QuickCipher::hyper_decrypt(&encrypted, &other_private).is_err());
+        assert!(QuickCipher::hyper_decrypt("no-separator", &other_private).is_err());
+    }
 }

@@ -1,4 +1,5 @@
 pub mod traits;
+#[cfg(feature = "aes")]
 pub mod aes;
 pub mod settings;
 
