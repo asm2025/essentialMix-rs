@@ -55,36 +55,17 @@ pub fn build_with<T: AsRef<Path>>(
 ) -> CommonResult<GlobalLoggerGuard> {
     let decorator = PlainSyncDecorator::new(io::stdout());
     let drain = CustomDecorator::new(decorator);
-    let logger = {
-        #[cfg(unix)]
-        {
-            FileRotate::new(
-                file_name,
-                AppendCount::new(6),
-                ContentLimit::Bytes(
-                    limit
-                        .unwrap_or(LOG_SIZE_MAX)
-                        .clamp(LOG_SIZE_MIN, LOG_SIZE_MAX),
-                ),
-                Compression::None,
-                None::<u32>,
-            )
-        }
-        #[cfg(not(unix))]
-        {
-            FileRotate::new(
-                file_name,
-                AppendCount::new(6),
-                ContentLimit::Bytes(
-                    limit
-                        .unwrap_or(LOG_SIZE_MAX)
-                        .clamp(LOG_SIZE_MIN, LOG_SIZE_MAX),
-                ),
-                Compression::None,
-                None::<OpenOptions>,
-            )
-        }
-    };
+    let logger = FileRotate::new(
+        file_name,
+        AppendCount::new(6),
+        ContentLimit::Bytes(
+            limit
+                .unwrap_or(LOG_SIZE_MAX)
+                .clamp(LOG_SIZE_MIN, LOG_SIZE_MAX),
+        ),
+        Compression::None,
+        None::<OpenOptions>,
+    );
     let file_drain = Drain::fuse(
         Json::new(logger)
             .add_key_value(o!("timestamp" => FnValue(|_| {

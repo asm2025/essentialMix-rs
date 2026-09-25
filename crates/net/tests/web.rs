@@ -2,8 +2,9 @@
 mod tests {
     use emixcore::{Error, Result};
     use emixnet::web::*;
+    use httpmock::prelude::*;
     use serde::Serialize;
-    use serde_json::Value;
+    use serde_json::{Value, json};
     use std::collections::HashMap;
 
     // In Rust integration tests, each file is a separate crate
@@ -61,15 +62,31 @@ mod tests {
         Ok(())
     }
 
+    // The tests below run against a local mock server so they are fast and
+    // deterministic; `test_live_httpbin_get` covers a real network round trip.
+
     #[tokio::test]
     async fn test_reqwest_get() -> Result<()> {
-        const BASE_URL: &str = "https://httpbin.org";
+        let server = MockServer::start_async().await;
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(GET)
+                    .path("/get")
+                    .query_param("p1", "foo")
+                    .query_param("p2", "baz")
+                    // Default headers from build_client()
+                    .header("cache-control", "no-cache")
+                    .header("pragma", "no-cache");
+                then.status(200)
+                    .json_body(json!({ "url": server.url("/get?p1=foo&p2=baz") }));
+            })
+            .await;
 
-        let client = emixnet::web::reqwestx::build_client()
+        let client = reqwestx::build_client()
             .build()
             .map_err(Error::from_std_error)?;
 
-        let url = (BASE_URL, "get?p1=foo&p2=baz").as_url()?;
+        let url = (server.base_url().as_str(), "get?p1=foo&p2=baz").as_url()?;
         let response = client
             .get(url)
             .send()
@@ -79,26 +96,33 @@ mod tests {
         assert!(response.status().is_success(), "GET request should succeed");
 
         let json: Value = response.json().await.map_err(Error::from_std_error)?;
-
         assert!(
             json.get("url").is_some(),
             "Response should contain 'url' field"
         );
 
+        mock.assert_async().await;
         Ok(())
     }
 
     #[tokio::test]
     async fn test_reqwest_post() -> Result<()> {
-        const BASE_URL: &str = "https://httpbin.org";
+        let body = get_employees(3);
+        let expected_body = serde_json::to_value(&body).map_err(Error::from_std_error)?;
 
-        let client = emixnet::web::reqwestx::build_client()
+        let server = MockServer::start_async().await;
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(POST).path("/post").json_body(expected_body.clone());
+                then.status(200).json_body(json!({ "data": expected_body }));
+            })
+            .await;
+
+        let client = reqwestx::build_client()
             .build()
             .map_err(Error::from_std_error)?;
 
-        let url = (BASE_URL, "post").as_url()?;
-        let body = get_employees(3);
-
+        let url = (server.base_url().as_str(), "post").as_url()?;
         let response: Value = client
             .post(url)
             .json(&body)
@@ -114,18 +138,25 @@ mod tests {
             "Response should contain 'data' field"
         );
 
+        mock.assert_async().await;
         Ok(())
     }
 
     #[tokio::test]
     async fn test_reqwest_get_ip() -> Result<()> {
-        const BASE_URL: &str = "https://httpbin.org";
+        let server = MockServer::start_async().await;
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(GET).path("/ip");
+                then.status(200).json_body(json!({ "origin": "203.0.113.7" }));
+            })
+            .await;
 
-        let client = emixnet::web::reqwestx::build_client()
+        let client = reqwestx::build_client()
             .build()
             .map_err(Error::from_std_error)?;
 
-        let url = (BASE_URL, "ip").as_url()?;
+        let url = (server.base_url().as_str(), "ip").as_url()?;
         let response: HashMap<String, String> = client
             .get(url)
             .send()
@@ -135,25 +166,108 @@ mod tests {
             .await
             .map_err(Error::from_std_error)?;
 
-        assert!(
-            response.contains_key("origin"),
-            "Response should contain 'origin' key"
-        );
-        let ip = response.get("origin").unwrap();
-        assert!(!ip.is_empty(), "IP address should not be empty");
+        assert_eq!(response.get("origin").map(String::as_str), Some("203.0.113.7"));
+
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_api_client_sends_json_headers() -> Result<()> {
+        let server = MockServer::start_async().await;
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(GET)
+                    .path("/api")
+                    .header("accept", "application/json")
+                    .header("cache-control", "no-cache");
+                then.status(200).json_body(json!({ "ok": true }));
+            })
+            .await;
+
+        let client = reqwestx::build_client_for_api()
+            .build()
+            .map_err(Error::from_std_error)?;
+
+        let response = client
+            .get(server.url("/api"))
+            .send()
+            .await
+            .map_err(Error::from_std_error)?;
+        assert!(response.status().is_success());
+
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_client_with_user_agent() -> Result<()> {
+        let server = MockServer::start_async().await;
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(GET).path("/ua").header("user-agent", "emix-test/1.0");
+                then.status(204);
+            })
+            .await;
+
+        let client = reqwestx::build_client_with_user_agent("emix-test/1.0".to_string())
+            .build()
+            .map_err(Error::from_std_error)?;
+
+        let response = client
+            .get(server.url("/ua"))
+            .send()
+            .await
+            .map_err(Error::from_std_error)?;
+        assert_eq!(response.status().as_u16(), 204);
+
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_reqwest_error_status_is_reported() -> Result<()> {
+        let server = MockServer::start_async().await;
+        server
+            .mock_async(|when, then| {
+                when.method(GET).path("/missing");
+                then.status(404);
+            })
+            .await;
+
+        let client = reqwestx::build_client()
+            .build()
+            .map_err(Error::from_std_error)?;
+
+        let response = client
+            .get(server.url("/missing"))
+            .send()
+            .await
+            .map_err(Error::from_std_error)?;
+        assert_eq!(response.status().as_u16(), 404);
+        assert!(response.error_for_status().is_err());
 
         Ok(())
     }
 
     #[test]
     fn test_blocking_reqwest_get() -> Result<()> {
-        const BASE_URL: &str = "https://httpbin.org";
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(GET)
+                .path("/get")
+                .query_param("p1", "foo")
+                .query_param("p2", "baz")
+                .header("cache-control", "no-cache");
+            then.status(200)
+                .json_body(json!({ "url": server.url("/get?p1=foo&p2=baz") }));
+        });
 
-        let client = emixnet::web::reqwestx::build_blocking_client()
+        let client = reqwestx::build_blocking_client()
             .build()
             .map_err(Error::from_std_error)?;
 
-        let url = (BASE_URL, "get?p1=foo&p2=baz").as_url()?;
+        let url = (server.base_url().as_str(), "get?p1=foo&p2=baz").as_url()?;
         let response = client.get(url).send().map_err(Error::from_std_error)?;
 
         assert!(response.status().is_success(), "GET request should succeed");
@@ -164,6 +278,31 @@ mod tests {
             "Response should contain 'url' field"
         );
 
+        mock.assert();
+        Ok(())
+    }
+
+    // Live network smoke test against httpbin.org (a public service that stalls at times).
+    // Run with: cargo test -p emixnet --test web -- --ignored
+    #[tokio::test]
+    #[ignore]
+    async fn test_live_httpbin_get() -> Result<()> {
+        let client = reqwestx::build_client()
+            .build()
+            .map_err(Error::from_std_error)?;
+
+        let url = ("https://httpbin.org", "get?p1=foo&p2=baz").as_url()?;
+        let json: Value = client
+            .get(url)
+            .send()
+            .await
+            .map_err(Error::from_std_error)?
+            .json()
+            .await
+            .map_err(Error::from_std_error)?;
+
+        assert_eq!(json["args"]["p1"], "foo");
+        assert_eq!(json["args"]["p2"], "baz");
         Ok(())
     }
 }

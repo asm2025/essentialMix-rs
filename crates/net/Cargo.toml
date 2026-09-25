@@ -33,6 +33,7 @@ mail = ["dep:html-entities", "dep:lettre", "dep:once_cell", "emix/fake"]
 vpn = ["dep:execute"]
 
 [dev-dependencies]
+httpmock = "0"
 tokio = { version = "1", features = ["full"] }
 
 [package.metadata.scripts]

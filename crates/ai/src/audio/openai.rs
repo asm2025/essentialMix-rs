@@ -1,7 +1,7 @@
 #[cfg(feature = "audio")]
 use async_openai::config::Config;
 #[cfg(feature = "audio")]
-use async_openai::types::CreateTranscriptionRequestArgs;
+use async_openai::types::audio::CreateTranscriptionRequestArgs;
 #[cfg(feature = "audio")]
 use async_openai::Client;
 use futures::executor::block_on;
@@ -45,17 +45,12 @@ pub struct OpenAIWhisper<C: Config> {
 #[cfg(feature = "audio")]
 impl<C: Config> OpenAIWhisper<C> {
     pub fn new(config: C) -> Self {
-        Self::from(config, None, ReqwestClient::new(), Default::default())
+        Self::from(config, None, ReqwestClient::new())
     }
 
     pub fn from_size(config: C, size: SourceSize) -> Self {
         let source = size.into();
-        Self::from(
-            config,
-            Some(source),
-            ReqwestClient::new(),
-            Default::default(),
-        )
+        Self::from(config, Some(source), ReqwestClient::new())
     }
 
     pub fn from_client(
@@ -63,17 +58,16 @@ impl<C: Config> OpenAIWhisper<C> {
         client: ReqwestClient,
         source: Option<OpenAiAudioSource>,
     ) -> Self {
-        Self::from(config, source, client, Default::default())
+        Self::from(config, source, client)
     }
 
     fn from(
         config: C,
         source: Option<OpenAiAudioSource>,
         client: ReqwestClient,
-        backoff: backoff::ExponentialBackoff,
     ) -> Self {
         Self {
-            client: Arc::new(Client::build(client, config, backoff)),
+            client: Arc::new(Client::build(client, config)),
             source: source.unwrap_or_default(),
         }
     }
@@ -110,7 +104,8 @@ impl<C: Config> OpenAIWhisper<C> {
         let response = self
             .client
             .audio()
-            .transcribe(request)
+            .transcription()
+            .create(request)
             .await
             .map_err(|e| Error::OpenAI(e.to_string()))?;
 
@@ -144,7 +139,8 @@ impl<C: Config> OpenAIWhisper<C> {
             let response = self
                 .client
                 .audio()
-                .transcribe(request)
+                .transcription()
+                .create(request)
                 .await
                 .map_err(|e| Error::OpenAI(e.to_string()))?;
 
