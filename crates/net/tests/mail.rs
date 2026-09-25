@@ -2,7 +2,7 @@
 mod tests {
 
     #[cfg(feature = "mail")]
-    use emixnet::web::mail::*;
+    use emixnet::{Result, web::mail::*};
 
     #[test]
     #[cfg(feature = "mail")]

@@ -40,6 +40,16 @@ impl From<NetError> for CoreError {
     }
 }
 
+impl From<CoreError> for NetError {
+    fn from(err: CoreError) -> Self {
+        match err {
+            CoreError::Http(msg) => NetError::Http(msg),
+            CoreError::Network(msg) => NetError::Network(msg),
+            other => NetError::OperationFailed(other.to_string()),
+        }
+    }
+}
+
 /// Result type alias for network operations
 pub type Result<T> = std::result::Result<T, NetError>;
 

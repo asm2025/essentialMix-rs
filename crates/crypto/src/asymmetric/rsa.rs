@@ -9,7 +9,7 @@ use crate::traits::{Algorithm, EncodingConfig, Encrypt};
 use rsa::{Oaep, Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 #[cfg(feature = "rsa")]
 #[cfg(feature = "sha2")]
-use sha2::Sha256;
+use rsa::sha2::Sha256; // rsa pins its own digest version; the workspace sha2 may differ
 
 /// RSA asymmetric encryption implementation
 #[cfg(feature = "rsa")]

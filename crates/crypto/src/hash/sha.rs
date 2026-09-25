@@ -1,6 +1,6 @@
 use sha2::{Sha256, Sha512, Digest};
 #[cfg(feature = "sha1")]
-use sha1::{Sha1, Digest as Sha1Digest};
+use sha1::Sha1;
 use crate::hash::traits::HashAlgorithm;
 use crate::traits::{Algorithm, EncodingConfig};
 use crate::error::{CryptoError, Result};

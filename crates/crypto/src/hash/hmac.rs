@@ -1,5 +1,5 @@
 #[cfg(feature = "hmac")]
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 #[cfg(feature = "hmac")]
 use sha2::{Sha256, Sha512};
 #[cfg(feature = "hmac")]

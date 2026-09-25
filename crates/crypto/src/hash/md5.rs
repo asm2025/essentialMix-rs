@@ -1,5 +1,5 @@
 #[cfg(feature = "md5")]
-use md5::{Md5, Digest};
+use md5;
 #[cfg(feature = "md5")]
 use hex;
 #[cfg(feature = "md5")]
@@ -76,9 +76,7 @@ impl HashAlgorithm for Md5Hash {
     }
 
     fn compute_hash_bytes(&self, buffer: &[u8]) -> Result<Vec<u8>> {
-        let mut hasher = Md5::new();
-        hasher.update(buffer);
-        Ok(hasher.finalize().to_vec())
+        Ok(md5::compute(buffer).0.to_vec())
     }
 
     fn compute_hash_slice(&self, buffer: &[u8], offset: usize, count: usize) -> Result<Vec<u8>> {

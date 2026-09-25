@@ -1,7 +1,7 @@
 use crate::error::{CryptoError, Result};
 use crate::random::traits::RandomNumberGenerator;
 use crate::traits::Algorithm;
-use rand::{RngCore, SeedableRng};
+use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
 /// Cryptographically secure random number generator using ChaCha20

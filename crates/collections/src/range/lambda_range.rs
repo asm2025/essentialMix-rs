@@ -174,6 +174,7 @@ where
     step: F,
     current: Option<T>,
     started: bool,
+    ascending: bool,
     _phantom: PhantomData<T>,
 }
 
@@ -203,7 +204,18 @@ where
             step,
             current: None,
             started: false,
+            ascending,
             _phantom: PhantomData,
+        }
+    }
+
+    /// Compares `value` with the end bound in the iteration direction,
+    /// so `Less` always means "not yet past the end".
+    fn cmp_end(&self, value: T) -> Ordering {
+        if self.ascending {
+            value.cmp(&self.end)
+        } else {
+            self.end.cmp(&value)
         }
     }
 }
@@ -223,7 +235,7 @@ where
                 (self.step)(self.start)
             });
         } else if let Some(cur) = self.current {
-            if cur < self.end {
+            if self.cmp_end(cur) == Ordering::Less {
                 self.current = Some((self.step)(cur));
             } else {
                 return None;
@@ -231,8 +243,7 @@ where
         }
 
         if let Some(value) = self.current {
-            let cmp = value.cmp(&self.end);
-            match cmp {
+            match self.cmp_end(value) {
                 Ordering::Less => Some(value),
                 Ordering::Equal if self.includes_end => Some(value),
                 _ => None,

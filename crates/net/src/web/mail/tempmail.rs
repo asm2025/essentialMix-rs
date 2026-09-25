@@ -203,7 +203,7 @@ impl TempMail {
                     .ok_or_else(|| Error::Parse("Missing or invalid email field".to_string()))?;
                 Ok(Self::parse(TempMailProvider::Tempmail, email))
             }
-            _ => Err(Error::Parse("Invalid response format".to_string())),
+            _ => Err(Error::Parse("Invalid response format".to_string()).into()),
         }
     }
 
@@ -213,22 +213,22 @@ impl TempMail {
             .map_err(|e| Error::from_std_error(e))?;
 
         if body.is_empty() {
-            return Err(Error::NoInput);
+            return Err(Error::NoInput.into());
         }
 
         let start = match body.find("fem coserch") {
             Some(index) => index,
-            None => return Err(Error::NotFound("coserch".to_string())),
+            None => return Err(Error::NotFound("coserch".to_string()).into()),
         };
         let body = &body[start..];
         let end = match body.find("fem dropselect") {
             Some(index) => index,
-            None => return Err(Error::NotFound("dropselect".to_string())),
+            None => return Err(Error::NotFound("dropselect".to_string()).into()),
         };
         let body = &body[..end];
         let captures = match RGX_EMAIL_FAKE_GENERATE.captures(&body) {
             Some(captures) => captures,
-            None => return Err(Error::NotFound("username and domain".to_string())),
+            None => return Err(Error::NotFound("username and domain".to_string()).into()),
         };
         let username = captures
             .get(1)

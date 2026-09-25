@@ -77,23 +77,37 @@ impl QuickCipher {
         encoder.decode_string(value)
     }
 
-    /// Encrypt a string using symmetric encryption (AES)
+    /// Encrypt a string using symmetric encryption (AES).
+    ///
+    /// Returns base64 of `IV || ciphertext` so [`QuickCipher::symmetric_decrypt`] can recover the IV.
     #[cfg(feature = "aes")]
     pub fn symmetric_encrypt(value: &str, key: &str) -> Result<String> {
+        use base64::Engine;
         let mut cipher = AesAlgorithm::new()?;
         SymmetricAlgorithm::generate_key_from_passphrase(&mut cipher, key, None, 10000)?;
         SymmetricAlgorithm::generate_iv(&mut cipher)?;
-        EncryptTrait::encrypt_string(&cipher, value)
+        let mut output = SymmetricAlgorithm::iv(&cipher).unwrap_or_default().to_vec();
+        output.extend(EncryptTrait::encrypt_bytes(&cipher, value.as_bytes())?);
+        Ok(base64::engine::general_purpose::STANDARD.encode(&output))
     }
 
-    /// Decrypt a string using symmetric encryption (AES)
+    /// Decrypt a string produced by [`QuickCipher::symmetric_encrypt`].
     #[cfg(feature = "aes")]
     pub fn symmetric_decrypt(value: &str, key: &str) -> Result<String> {
+        use base64::Engine;
+        const IV_LEN: usize = 16;
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(value)
+            .map_err(|e| CryptoError::decryption(format!("Failed to decode base64: {}", e)))?;
+        if bytes.len() < IV_LEN {
+            return Err(CryptoError::decryption("Ciphertext is missing the IV".to_string()));
+        }
+        let (iv, data) = bytes.split_at(IV_LEN);
         let mut cipher = AesAlgorithm::new()?;
         SymmetricAlgorithm::generate_key_from_passphrase(&mut cipher, key, None, 10000)?;
-        // Note: In a real implementation, IV should be stored with the ciphertext
-        SymmetricAlgorithm::generate_iv(&mut cipher)?;
-        EncryptTrait::decrypt_string(&cipher, value)
+        SymmetricAlgorithm::set_iv(&mut cipher, iv)?;
+        let decrypted = EncryptTrait::decrypt_bytes(&cipher, data)?;
+        String::from_utf8(decrypted).map_err(|e| CryptoError::decryption(format!("Invalid UTF-8: {}", e)))
     }
 
     /// Encrypt a string using asymmetric encryption (RSA)

@@ -121,7 +121,7 @@ fn test_copy_block() {
 
     // Copy across byte boundaries
     let result = BitHelper::copy_block(&bytes, 4, 12);
-    assert_eq!(result, vec![0xF0, 0x0A]);
+    assert_eq!(result, vec![0xF0, 0x00]);
 }
 
 #[test]

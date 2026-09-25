@@ -197,3 +197,26 @@ fn test_lambda_range_from_range() {
     let values: Vec<i32> = lr.iter().collect();
     assert_eq!(values, vec![1, 2, 3, 4, 5]);
 }
+
+#[test]
+fn test_lambda_range_down_by_uneven_step() {
+    let r = LambdaRange::new(0, 10);
+    let values: Vec<i32> = r.down_by(3).collect();
+    assert_eq!(values, vec![10, 7, 4, 1]);
+}
+
+#[test]
+fn test_lambda_range_down_by_exclusive_bounds() {
+    let values: Vec<i32> = LambdaRange::new(0, 10).exclude_start().down_by(2).collect();
+    assert_eq!(values, vec![10, 8, 6, 4, 2]);
+
+    let values: Vec<i32> = LambdaRange::new(0, 10).exclude_end().down_by(2).collect();
+    assert_eq!(values, vec![8, 6, 4, 2, 0]);
+}
+
+#[test]
+fn test_lambda_range_custom_descending_step() {
+    let r = LambdaRange::new(1, 16);
+    let values: Vec<i32> = r.step(|x| x / 2).collect();
+    assert_eq!(values, vec![16, 8, 4, 2, 1]);
+}

@@ -9,6 +9,40 @@ use crate::random::rng::RngCryptoServiceProvider;
 use pbkdf2::pbkdf2_hmac;
 #[cfg(feature = "sha2")]
 use sha2::Sha256;
+#[cfg(all(feature = "aes", feature = "cbc"))]
+use cbc::cipher::{
+    BlockModeDecrypt, BlockModeEncrypt, KeyIvInit,
+    block_padding::{NoPadding, Pkcs7, ZeroPadding},
+};
+
+/// Encrypts `$data` with AES-CBC using the given AES variant and padding mode.
+#[cfg(all(feature = "aes", feature = "cbc"))]
+macro_rules! cbc_encrypt {
+    ($cipher:ty, $key:expr, $iv:expr, $data:expr, $padding:expr) => {{
+        let enc = cbc::Encryptor::<$cipher>::new_from_slices($key, $iv)
+            .map_err(|e| CryptoError::key(format!("Invalid key or IV length: {}", e)))?;
+        match $padding {
+            PaddingMode::Pkcs7 => enc.encrypt_padded_vec::<Pkcs7>($data),
+            PaddingMode::ZeroPadding => enc.encrypt_padded_vec::<ZeroPadding>($data),
+            PaddingMode::NoPadding => enc.encrypt_padded_vec::<NoPadding>($data),
+        }
+    }};
+}
+
+/// Decrypts `$data` with AES-CBC using the given AES variant and padding mode.
+#[cfg(all(feature = "aes", feature = "cbc"))]
+macro_rules! cbc_decrypt {
+    ($cipher:ty, $key:expr, $iv:expr, $data:expr, $padding:expr) => {{
+        let dec = cbc::Decryptor::<$cipher>::new_from_slices($key, $iv)
+            .map_err(|e| CryptoError::key(format!("Invalid key or IV length: {}", e)))?;
+        match $padding {
+            PaddingMode::Pkcs7 => dec.decrypt_padded_vec::<Pkcs7>($data),
+            PaddingMode::ZeroPadding => dec.decrypt_padded_vec::<ZeroPadding>($data),
+            PaddingMode::NoPadding => dec.decrypt_padded_vec::<NoPadding>($data),
+        }
+        .map_err(|_| CryptoError::Padding("Invalid padding".to_string()))?
+    }};
+}
 
 /// AES symmetric encryption implementation
 #[cfg(feature = "aes")]
@@ -42,23 +76,18 @@ impl AesAlgorithm {
         })
     }
 
-    fn apply_pkcs7_padding(data: &[u8], block_size: usize) -> Vec<u8> {
-        let pad_len = block_size - (data.len() % block_size);
-        let mut padded = data.to_vec();
-        padded.extend(vec![pad_len as u8; pad_len]);
-        padded
-    }
+    /// Validates the key against the configured key size and returns the IV.
+    fn key_and_iv(&self) -> Result<&[u8]> {
+        if !self.valid_key_size(self.key.len() * 8) || self.key.len() * 8 != self.key_size {
+            return Err(CryptoError::InvalidKeySize { expected: self.key_size, actual: self.key.len() * 8 });
+        }
 
-    #[allow(dead_code)]
-    fn remove_pkcs7_padding(data: &[u8]) -> Result<Vec<u8>> {
-        if data.is_empty() {
-            return Err(CryptoError::Padding("Empty data".to_string()));
+        let iv = self.iv.as_deref().ok_or_else(|| CryptoError::NotInitialized("IV not set".to_string()))?;
+        if iv.len() != 16 {
+            return Err(CryptoError::InvalidIvSize { expected: 16, actual: iv.len() });
         }
-        let pad_len = data[data.len() - 1] as usize;
-        if pad_len == 0 || pad_len > data.len() {
-            return Err(CryptoError::Padding("Invalid padding".to_string()));
-        }
-        Ok(data[..data.len() - pad_len].to_vec())
+
+        Ok(iv)
     }
 }
 
@@ -102,41 +131,19 @@ impl Encrypt for AesAlgorithm {
     }
 
     fn encrypt_bytes(&self, buffer: &[u8]) -> Result<Vec<u8>> {
-        if self.key.len() != 32 {
-            return Err(CryptoError::InvalidKeySize { expected: 256, actual: self.key.len() * 8 });
+        let iv = self.key_and_iv()?;
+        // NoPadding panics inside the cipher on partial blocks, so reject them up front
+        if self.padding == PaddingMode::NoPadding && buffer.len() % 16 != 0 {
+            return Err(CryptoError::Padding("Data length must be multiple of block size".to_string()));
         }
-        if self.iv.is_none() {
-            return Err(CryptoError::NotInitialized("IV not set".to_string()));
-        }
-
-        let iv = self.iv.as_ref().unwrap();
-        if iv.len() != 16 {
-            return Err(CryptoError::InvalidIvSize { expected: 16, actual: iv.len() });
-        }
-
-        // Apply padding
-        let _padded = match self.padding {
-            PaddingMode::Pkcs7 => Self::apply_pkcs7_padding(buffer, 16),
-            PaddingMode::NoPadding => {
-                if buffer.len() % 16 != 0 {
-                    return Err(CryptoError::Padding("Data length must be multiple of block size".to_string()));
-                }
-                buffer.to_vec()
-            }
-            PaddingMode::ZeroPadding => {
-                let mut padded = buffer.to_vec();
-                let pad_len = 16 - (buffer.len() % 16);
-                padded.extend(vec![0u8; pad_len]);
-                padded
-            }
-        };
 
         match self.mode {
-            CipherMode::Cbc => {
-                // For now, return an error indicating CBC mode needs proper implementation
-                // The cbc crate API may vary by version
-                Err(CryptoError::UnsupportedCipherMode("CBC mode implementation in progress".to_string()))
-            }
+            #[cfg(feature = "cbc")]
+            CipherMode::Cbc => Ok(match self.key.len() {
+                16 => cbc_encrypt!(aes::Aes128, &self.key, iv, buffer, self.padding),
+                24 => cbc_encrypt!(aes::Aes192, &self.key, iv, buffer, self.padding),
+                _ => cbc_encrypt!(aes::Aes256, &self.key, iv, buffer, self.padding),
+            }),
             _ => Err(CryptoError::UnsupportedCipherMode(format!("{:?}", self.mode))),
         }
     }
@@ -158,27 +165,18 @@ impl Encrypt for AesAlgorithm {
     }
 
     fn decrypt_bytes(&self, buffer: &[u8]) -> Result<Vec<u8>> {
-        if self.key.len() != 32 {
-            return Err(CryptoError::InvalidKeySize { expected: 256, actual: self.key.len() * 8 });
-        }
-        if self.iv.is_none() {
-            return Err(CryptoError::NotInitialized("IV not set".to_string()));
-        }
+        let iv = self.key_and_iv()?;
         if buffer.len() % 16 != 0 {
             return Err(CryptoError::decryption("Ciphertext length must be multiple of block size".to_string()));
         }
 
-        let iv = self.iv.as_ref().unwrap();
-        if iv.len() != 16 {
-            return Err(CryptoError::InvalidIvSize { expected: 16, actual: iv.len() });
-        }
-
         match self.mode {
-            CipherMode::Cbc => {
-                // For now, return an error indicating CBC mode needs proper implementation
-                // The cbc crate API may vary by version
-                Err(CryptoError::UnsupportedCipherMode("CBC mode implementation in progress".to_string()))
-            }
+            #[cfg(feature = "cbc")]
+            CipherMode::Cbc => Ok(match self.key.len() {
+                16 => cbc_decrypt!(aes::Aes128, &self.key, iv, buffer, self.padding),
+                24 => cbc_decrypt!(aes::Aes192, &self.key, iv, buffer, self.padding),
+                _ => cbc_decrypt!(aes::Aes256, &self.key, iv, buffer, self.padding),
+            }),
             _ => Err(CryptoError::UnsupportedCipherMode(format!("{:?}", self.mode))),
         }
     }

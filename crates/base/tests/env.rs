@@ -2,6 +2,14 @@
 mod tests {
     use emix::env::*;
     use std::env;
+    use std::sync::{Mutex, MutexGuard};
+
+    // Process environment is global; serialize tests so parallel runs do not race on shared keys
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    fn lock_env() -> MutexGuard<'static, ()> {
+        ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner())
+    }
 
     // Helper function to clean up environment variables after tests
     fn cleanup_env(key: &str) {
@@ -12,6 +20,7 @@ mod tests {
 
     #[test]
     fn test_get_env_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("TEST_VAR", "test_value");
         }
@@ -22,6 +31,7 @@ mod tests {
 
     #[test]
     fn test_get_env_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NONEXISTENT_VAR");
         }
@@ -31,6 +41,7 @@ mod tests {
 
     #[test]
     fn test_get_env_or_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("TEST_VAR", "actual_value");
         }
@@ -41,6 +52,7 @@ mod tests {
 
     #[test]
     fn test_get_env_or_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NONEXISTENT_VAR");
         }
@@ -50,6 +62,7 @@ mod tests {
 
     #[test]
     fn test_get_required_env_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("REQUIRED_VAR", "required_value");
         }
@@ -61,6 +74,7 @@ mod tests {
 
     #[test]
     fn test_get_required_env_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NONEXISTENT_REQUIRED_VAR");
         }
@@ -76,6 +90,7 @@ mod tests {
 
     #[test]
     fn test_get_port_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("PORT", "8080");
         }
@@ -86,6 +101,7 @@ mod tests {
 
     #[test]
     fn test_get_port_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("PORT");
         }
@@ -95,6 +111,7 @@ mod tests {
 
     #[test]
     fn test_get_port_with_invalid_value() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("PORT", "invalid");
         }
@@ -105,6 +122,7 @@ mod tests {
 
     #[test]
     fn test_get_port_or_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("PORT", "3000");
         }
@@ -115,6 +133,7 @@ mod tests {
 
     #[test]
     fn test_get_port_or_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("PORT");
         }
@@ -124,6 +143,7 @@ mod tests {
 
     #[test]
     fn test_get_port_or_with_invalid_value() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("PORT", "not_a_number");
         }
@@ -134,6 +154,7 @@ mod tests {
 
     #[test]
     fn test_get_database_url_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("DATABASE_URL", "postgresql://localhost/test");
         }
@@ -144,6 +165,7 @@ mod tests {
 
     #[test]
     fn test_get_database_url_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("DATABASE_URL");
         }
@@ -153,6 +175,7 @@ mod tests {
 
     #[test]
     fn test_is_development_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "development");
         }
@@ -163,6 +186,7 @@ mod tests {
 
     #[test]
     fn test_is_development_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NODE_ENV");
         }
@@ -172,6 +196,7 @@ mod tests {
 
     #[test]
     fn test_is_development_case_insensitive() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "DEVELOPMENT");
         }
@@ -182,6 +207,7 @@ mod tests {
 
     #[test]
     fn test_is_staging_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "staging");
         }
@@ -192,6 +218,7 @@ mod tests {
 
     #[test]
     fn test_is_staging_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NODE_ENV");
         }
@@ -201,6 +228,7 @@ mod tests {
 
     #[test]
     fn test_is_staging_case_insensitive() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "STAGING");
         }
@@ -211,6 +239,7 @@ mod tests {
 
     #[test]
     fn test_is_production_when_set() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "production");
         }
@@ -221,6 +250,7 @@ mod tests {
 
     #[test]
     fn test_is_production_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NODE_ENV");
         }
@@ -230,6 +260,7 @@ mod tests {
 
     #[test]
     fn test_is_production_case_insensitive() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "PRODUCTION");
         }
@@ -240,6 +271,7 @@ mod tests {
 
     #[test]
     fn test_is_environment_when_matches() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "test");
         }
@@ -250,6 +282,7 @@ mod tests {
 
     #[test]
     fn test_is_environment_when_not_matches() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "production");
         }
@@ -260,6 +293,7 @@ mod tests {
 
     #[test]
     fn test_is_environment_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NODE_ENV");
         }
@@ -269,6 +303,7 @@ mod tests {
 
     #[test]
     fn test_is_environment_case_insensitive() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "TEST");
         }
@@ -279,6 +314,7 @@ mod tests {
 
     #[test]
     fn test_is_environment_empty_string() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NODE_ENV");
         }
@@ -288,6 +324,7 @@ mod tests {
 
     #[test]
     fn test_is_any_environment_when_one_matches() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "production");
         }
@@ -298,6 +335,7 @@ mod tests {
 
     #[test]
     fn test_is_any_environment_when_none_matches() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "test");
         }
@@ -308,6 +346,7 @@ mod tests {
 
     #[test]
     fn test_is_any_environment_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("NODE_ENV");
         }
@@ -317,6 +356,7 @@ mod tests {
 
     #[test]
     fn test_is_any_environment_case_insensitive() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("NODE_ENV", "PRODUCTION");
         }
@@ -327,6 +367,7 @@ mod tests {
 
     #[test]
     fn test_get_allow_anonymous_users_when_true() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("ALLOW_ANONYMOUS_USERS", "true");
         }
@@ -337,6 +378,7 @@ mod tests {
 
     #[test]
     fn test_get_allow_anonymous_users_when_false() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("ALLOW_ANONYMOUS_USERS", "false");
         }
@@ -347,6 +389,7 @@ mod tests {
 
     #[test]
     fn test_get_allow_anonymous_users_when_not_set() {
+        let _guard = lock_env();
         unsafe {
             env::remove_var("ALLOW_ANONYMOUS_USERS");
         }
@@ -356,6 +399,7 @@ mod tests {
 
     #[test]
     fn test_get_allow_anonymous_users_when_other_value() {
+        let _guard = lock_env();
         unsafe {
             env::set_var("ALLOW_ANONYMOUS_USERS", "yes");
         }

@@ -2,7 +2,7 @@
 mod tests {
 
     #[cfg(feature = "vpn")]
-    use emixnet::vpn::*;
+    use emixnet::{Result, vpn::*};
 
     #[cfg(feature = "vpn")]
     use std::env;

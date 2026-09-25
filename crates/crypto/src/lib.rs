@@ -25,6 +25,9 @@
 //!
 //! // Encrypt with symmetric encryption
 //! let encrypted = QuickCipher::symmetric_encrypt("secret message", "my-key")?;
+//! let decrypted = QuickCipher::symmetric_decrypt(&encrypted, "my-key")?;
+//! assert_eq!(decrypted, "secret message");
+//! # Ok::<(), emixcrypto::CryptoError>(())
 //! ```
 
 pub mod asymmetric;

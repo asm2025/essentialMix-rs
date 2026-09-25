@@ -10,7 +10,7 @@ pub mod lorem;
 pub mod person;
 
 use fake::{Fake, faker::boolean::raw as f_boolean, locales, uuid};
-use rand::{Rng, distr::uniform::SampleUniform};
+use rand::{RngExt, distr::uniform::SampleUniform};
 use std::ops::Range;
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

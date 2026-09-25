@@ -8,6 +8,8 @@ This is a Cargo workspace containing the following crates:
 
 - **emixcore** (`crates/core`) – shared error types, debug flag, and traits
 - **emix** (`crates/base`) – core utility functions and components
+- **emixcollections** (`crates/collections`) – generic range types (iteration, clamping, overlap detection) and bit helpers
+- **emixcrypto** (`crates/crypto`) – encryption (AES, RSA), hashing (SHA, MD5, HMAC, Adler32), encoders, and secure RNG
 - **emixai** (`crates/ai`) – AI-focused helpers (audio, imaging, language, vision)
 - **emixdb** (`crates/db/common`) – shared DTOs for database abstractions
 - **emixdiesel** (`crates/db/diesel`) – async Diesel repositories and helpers
@@ -44,6 +46,12 @@ Or from the root:
 
 ```bash
 cargo test -p emix
+```
+
+Tests marked `#[ignore]` need external resources (API keys, model downloads, network access). Run them manually:
+
+```bash
+cargo test --workspace -- --ignored
 ```
 
 ## Running the Application
