@@ -24,7 +24,7 @@ cargo test -p emixdiesel --features postgres  # feature-gated code needs its fea
 - Non-ignored tests must not hit the network: `emixnet` HTTP tests use a local `httpmock` server (`crates/net/tests/web.rs`).
 - Development happens in WSL (Ubuntu). Native features need system packages: `build-essential pkg-config perl cmake libssl-dev libpq-dev libmysqlclient-dev` (diesel backends, `*-bundled`), plus `libasound2-dev` for `emixai`'s `audio` feature. The Windows `x86_64-pc-windows-gnu` toolchain cannot build `ort-sys` (`emixai` audio).
 - `.cargo/config.toml` sets `-Adead_code` globally, so unused-code warnings are suppressed.
-- `publish.bat` (Windows) publishes crates in dependency order: core, base, db/common, collections, crypto, threading, log, net, ai, db/diesel, db/seaorm. Options: `-c` dry-run, `-s N` resume at step N, `-d` delay between crates, `-r`/`-w` retry count/wait. Dry-run fails for dependents until their dependencies are actually published.
+- Publishing: `cargo publish --workspace --dry-run`, then `cargo publish --workspace`. Cargo orders crates by dependency, waits for each to reach the index, and the dry-run checks dependents against the local packages. The root package has `publish = false`. To resume after a partial publish, add `--exclude <crate>` for each crate already uploaded.
 
 ## Architecture
 

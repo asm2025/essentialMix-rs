@@ -7,6 +7,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 readme = "README.md"
+# Placeholder binary; only the crates under crates/ are published
+publish = false
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }

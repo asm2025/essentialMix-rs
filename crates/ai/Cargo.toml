@@ -8,6 +8,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 readme = "README.md"
+# Sample audio (~2.7 MiB) is only needed by the repo tests
+exclude = ["tests/audio_files"]
 
 [dependencies]
 emix = { workspace = true}
