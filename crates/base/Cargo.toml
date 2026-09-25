@@ -21,7 +21,7 @@ fake = { version = "4", features = ["derive", "uuid", "always-true-rng", "random
 fs_extra = "1"
 glob = "0"
 rand = "0"
-randua = "0"
+randua = { version = "0", optional = true }
 rpassword = { version = "7", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -32,7 +32,7 @@ uuid = { version = "1", features = ["v4", "serde"] }
 [features]
 full = ["terminal", "fake"]
 terminal = ["dep:crossterm", "dep:dialoguer", "dep:rpassword"]
-fake = ["dep:fake"]
+fake = ["dep:fake", "dep:randua"]
 
 [package.metadata.scripts]
 run = "cargo run"
